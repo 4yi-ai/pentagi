@@ -113,13 +113,6 @@ RUN go build -trimpath \
         -X pentagi/pkg/version.PackageRev=${PACKAGE_REV}" \
     -o /ftester ./cmd/ftester
 
-# Build etester utility
-RUN go build -trimpath \
-    -ldflags "\
-        -X pentagi/pkg/version.PackageName=etester \
-        -X pentagi/pkg/version.PackageVer=${PACKAGE_VER} \
-        -X pentagi/pkg/version.PackageRev=${PACKAGE_REV}" \
-    -o /etester ./cmd/etester
 
 # ========================================
 # Stage 3: Production Runtime Environment
@@ -153,7 +146,6 @@ RUN mkdir -p \
 COPY --from=api-builder /pentagi /opt/pentagi/bin/pentagi
 COPY --from=api-builder /ctester /opt/pentagi/bin/ctester
 COPY --from=api-builder /ftester /opt/pentagi/bin/ftester
-COPY --from=api-builder /etester /opt/pentagi/bin/etester
 COPY --from=frontend-compiler /app/ui/dist /opt/pentagi/fe
 COPY --from=api-builder /licenses/backend /opt/pentagi/licenses/backend
 COPY --from=frontend-compiler /licenses/frontend /opt/pentagi/licenses/frontend
