@@ -2,7 +2,7 @@
 
 This directory holds the **platform-conforming shape** of PentAGI so it can be
 imported and deployed as a 4YI marketplace app (dedicated app, per-org install),
-where apps run as **unprivileged Kubernetes pods with no Docker socket**.
+where apps run as **restricted Kubernetes pods without host container-runtime access**.
 
 ## Why the repo needed restructuring
 
@@ -14,7 +14,7 @@ share a structure the importer expects:
 | Services built via `build: {context,dockerfile}` | ✅ | ❌ uses prebuilt `image:` | ✅ |
 | Exactly one **public** service | ✅ frontend | ❌ several + spawns sandboxes | ✅ `pentagi` |
 | **No** self-bundled stateful datastore | ✅ (no DB) | ❌ bundles `pgvector` | ✅ postgres declared as managed service |
-| No Docker socket / privileged | ✅ | ❌ mounts docker.sock, spawns Kali | ✅ executor backend |
+| No host runtime access | ✅ | ❌ spawns Kali containers at runtime | ✅ executor backend |
 
 Stock PentAGI fails all four; this deployment shape fixes all four.
 
@@ -23,7 +23,7 @@ Stock PentAGI fails all four; this deployment shape fixes all four.
 1. **Execution backend** (`EXECUTION_BACKEND=executor`, implemented in
    `backend/pkg/executor` + `backend/cmd/exec-agent`): PentAGI no longer spawns a
    Docker container per flow. It runs commands by calling the resident
-   `kali-executor` service over HTTP. No docker.sock, no privileged access.
+   `kali-executor` service over HTTP. No host container-runtime access, no elevated capabilities.
 
 2. **Service topology** (`docker-compose.yml` here):
    - `pentagi` — the single **public** web/API service (built from the root Dockerfile).
@@ -119,7 +119,7 @@ Constraint check: exactly one `route: public` (pentagi); pgvector is a managed
   not, use the platform's base postgres and enable the `vector` extension on boot,
   or switch to a platform-managed vector store.
 - Add a `/healthz` endpoint to the pentagi server (smoke test target).
-- `nmap -sS` needs `CAP_NET_RAW`; on an unprivileged pod use `-sT` (TCP connect)
+- `nmap -sS` needs `CAP_NET_RAW`; on a restricted pod use `-sT` (TCP connect)
   or request that single capability.
 - 4YI has no embeddings endpoint → vector memory is degraded unless a platform
   embedding is wired in.

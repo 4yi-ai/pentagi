@@ -8,8 +8,8 @@
 #   - NO self-bundled stateful datastore container: pgvector is declared as a
 #     platform-managed `postgres` service in the import Deployment Proposal (see
 #     README.md), NOT co-deployed here,
-#   - the agent uses the executor backend (EXECUTION_BACKEND=executor), so NO
-#     docker.sock mount and NO privileged access are required.
+#   - the agent uses the executor backend (EXECUTION_BACKEND=executor), so no host
+#     container-runtime access and no elevated capabilities are required.
 #
 # IMPORTANT: the 4YI importer only auto-detects a `docker-compose.yml` at the
 # repo root. For an actual import, publish a dedicated marketplace branch of the
