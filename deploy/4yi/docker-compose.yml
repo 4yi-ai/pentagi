@@ -1,0 +1,67 @@
+# PentAGI — 4YI marketplace deployment shape.
+#
+# This is the platform-conforming compose the 4YI importer expects, modeled on
+# the successfully-listed apps (screenshot-to-code / 4yi-cad):
+#   - every service is built from source via `build: {context, dockerfile}`
+#     (no prebuilt `image:` refs the importer can't rebuild),
+#   - exactly ONE public service (pentagi),
+#   - NO self-bundled stateful datastore container: pgvector is declared as a
+#     platform-managed `postgres` service in the import Deployment Proposal (see
+#     README.md), NOT co-deployed here,
+#   - the agent uses the executor backend (EXECUTION_BACKEND=executor), so NO
+#     docker.sock mount and NO privileged access are required.
+#
+# IMPORTANT: the 4YI importer only auto-detects a `docker-compose.yml` at the
+# repo root. For an actual import, publish a dedicated marketplace branch of the
+# fork whose ROOT docker-compose.yml is this file (build contexts are written
+# relative to the repo root for exactly that reason).
+
+services:
+  # --- the single public web service --------------------------------------
+  pentagi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - EXECUTION_BACKEND=executor
+      - EXECUTOR_URL=http://kali-executor:8022
+      - EXECUTOR_TOKEN=${EXECUTOR_TOKEN}
+      - EXECUTOR_DEFAULT_IMAGE=vxcontrol/kali-linux:latest
+      # DB points at the platform-managed postgres service (see README).
+      - PENTAGI_POSTGRES_DB=${PENTAGI_POSTGRES_DB:-pentagidb}
+      # LLM gateway (4YI). Base URL + key are injected as platform secrets.
+      - LLM_SERVER_URL=${LLM_SERVER_URL}
+      - LLM_SERVER_MODEL=${LLM_SERVER_MODEL:-anthropic.claude-sonnet-4-6}
+      - SERVER_PORT=8443
+      - SERVER_USE_SSL=false        # TLS is terminated by the platform ALB ingress
+    ports:
+      - "8443:8443"
+    depends_on:
+      kali-executor:
+        condition: service_started
+
+  # --- internal: resident tools executor (Kali + exec-agent) --------------
+  kali-executor:
+    build:
+      context: backend
+      dockerfile: cmd/exec-agent/Dockerfile
+    environment:
+      - WORK_ROOT=/work
+      - EXECUTOR_LISTEN=:8022
+      - EXECUTOR_TOKEN=${EXECUTOR_TOKEN}
+    expose:
+      - "8022"
+
+  # --- internal: web scraper ---------------------------------------------
+  # scraper ships as a prebuilt image upstream; for the marketplace build it is
+  # declared as an internal service. If the importer requires a build context,
+  # add a thin Dockerfile (FROM vxcontrol/scraper:latest) under deploy/4yi/scraper.
+  scraper:
+    build:
+      context: deploy/4yi/scraper
+      dockerfile: Dockerfile
+    environment:
+      - LOCAL_SCRAPER_USERNAME=${LOCAL_SCRAPER_USERNAME:-someuser}
+      - LOCAL_SCRAPER_PASSWORD=${LOCAL_SCRAPER_PASSWORD}
+    expose:
+      - "443"

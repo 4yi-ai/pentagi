@@ -18,6 +18,7 @@ import (
 	"pentagi/pkg/controller"
 	"pentagi/pkg/database"
 	"pentagi/pkg/docker"
+	"pentagi/pkg/executor"
 	"pentagi/pkg/graph/subscriptions"
 	obs "pentagi/pkg/observability"
 	"pentagi/pkg/observability/profiling"
@@ -127,9 +128,19 @@ func main() {
 
 	go profiling.Start()
 
-	client, err := docker.NewDockerClient(ctx, queries, cfg)
+	// Execution backend selection (EXECUTION_BACKEND, default "docker"):
+	//   docker   — spawn a sandbox container per flow via the Docker API (local default, unchanged).
+	//   executor — exec into a remote long-running exec-agent over HTTP (no Docker socket / privileged
+	//              access needed; required for unprivileged Kubernetes/marketplace deployment).
+	var client docker.DockerClient
+	switch cfg.ExecutionBackend {
+	case "executor":
+		client, err = executor.NewExecAgentClient(ctx, queries, cfg)
+	default:
+		client, err = docker.NewDockerClient(ctx, queries, cfg)
+	}
 	if err != nil {
-		log.Fatalf("Docker runtime client initialization failed: %v", err)
+		log.Fatalf("Execution backend (%s) initialization failed: %v", cfg.ExecutionBackend, err)
 	}
 
 	providers, err := providers.NewProviderController(cfg, queries, client)

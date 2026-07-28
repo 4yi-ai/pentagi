@@ -1,0 +1,38 @@
+# Local overlay to run PentAGI with the executor backend (no Docker socket needed
+# by the agent) — the same execution model used for unprivileged Kubernetes /
+# 4YI marketplace deployment.
+#
+# Usage:
+#   # build the resident executor image (Kali + exec-agent) once:
+#   docker build -f backend/cmd/exec-agent/Dockerfile -t local/pentagi-executor:latest backend
+#   # build a pentagi image from local source (contains the executor backend):
+#   docker build -t local/pentagi:executor .
+#   # run:
+#   PENTAGI_IMAGE=local/pentagi:executor \
+#     docker compose -f docker-compose.yml -f docker-compose-executor.yml up -d
+#
+# This overlay leaves the default (docker-backend) stack untouched; you only get
+# executor mode when you explicitly include this file.
+
+services:
+  kali-executor:
+    image: local/pentagi-executor:latest
+    container_name: kali-executor
+    restart: unless-stopped
+    environment:
+      - WORK_ROOT=/work
+      - EXECUTOR_LISTEN=:8022
+      - EXECUTOR_TOKEN=${EXECUTOR_TOKEN:-change-me-executor-token}
+    networks:
+      - pentagi-network
+    # No privileged mode, no docker.sock — this is the whole point.
+
+  pentagi:
+    environment:
+      - EXECUTION_BACKEND=executor
+      - EXECUTOR_URL=http://kali-executor:8022
+      - EXECUTOR_TOKEN=${EXECUTOR_TOKEN:-change-me-executor-token}
+      - EXECUTOR_DEFAULT_IMAGE=vxcontrol/kali-linux:latest
+    depends_on:
+      kali-executor:
+        condition: service_started

@@ -38,6 +38,16 @@ type Config struct {
 	DockerDefaultImageForPentest string `env:"DOCKER_DEFAULT_IMAGE_FOR_PENTEST" envDefault:"vxcontrol/kali-linux"`
 	TerminalToolTimeout          int    `env:"TERMINAL_TOOL_TIMEOUT" envDefault:"1200"`
 
+	// === Execution Backend Selection ===
+	// ExecutionBackend selects how agent commands are executed:
+	//   "docker"   (default) — spawn a sandbox container per flow via the Docker API (requires host Docker access).
+	//   "executor" — exec commands into a pre-existing remote executor over HTTP (no Docker socket / no privileged
+	//                access required). This mode is what makes PentAGI deployable on unprivileged Kubernetes pods.
+	ExecutionBackend     string `env:"EXECUTION_BACKEND" envDefault:"docker"`
+	ExecutorURL          string `env:"EXECUTOR_URL"`
+	ExecutorToken        string `env:"EXECUTOR_TOKEN"`
+	ExecutorDefaultImage string `env:"EXECUTOR_DEFAULT_IMAGE" envDefault:"vxcontrol/kali-linux"`
+
 	// === API Server Configuration ===
 	ServerPort   int    `env:"SERVER_PORT" envDefault:"8080"`
 	ServerHost   string `env:"SERVER_HOST" envDefault:"0.0.0.0"`
