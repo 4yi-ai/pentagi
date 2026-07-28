@@ -238,6 +238,11 @@ func NewRouter(
 	router.Use(gin.Recovery())
 	router.Use(logger.WithGinLogger("pentagi-api"))
 
+	// Unauthenticated liveness endpoint for platform smoke tests / k8s probes.
+	router.GET("/healthz", func(c *gin.Context) {
+		c.String(http.StatusOK, "ok")
+	})
+
 	cookieStore := cookie.NewStore(auth.MakeCookieStoreKey(cfg.CookieSigningSalt)...)
 	router.Use(sessions.Sessions("auth", cookieStore))
 
