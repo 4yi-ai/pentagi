@@ -5,7 +5,7 @@
 // that single environment.
 //
 // This is what makes PentAGI deployable on platforms that forbid Docker-socket
-// / privileged access (e.g. unprivileged Kubernetes pods on AWS EKS): the
+// / host-runtime access (e.g. restricted Kubernetes pods on AWS EKS): the
 // orchestrator never touches the host Docker daemon; it only makes HTTP calls to
 // the executor over the cluster network.
 //

@@ -41,8 +41,8 @@ type Config struct {
 	// === Execution Backend Selection ===
 	// ExecutionBackend selects how agent commands are executed:
 	//   "docker"   (default) — spawn a sandbox container per flow via the Docker API (requires host Docker access).
-	//   "executor" — exec commands into a pre-existing remote executor over HTTP (no Docker socket / no privileged
-	//                access required). This mode is what makes PentAGI deployable on unprivileged Kubernetes pods.
+	//   "executor" — exec commands into a pre-existing remote executor over HTTP (no host container-runtime access
+	//                access required). This mode is what makes PentAGI deployable on restricted Kubernetes pods.
 	ExecutionBackend     string `env:"EXECUTION_BACKEND" envDefault:"docker"`
 	ExecutorURL          string `env:"EXECUTOR_URL"`
 	ExecutorToken        string `env:"EXECUTOR_TOKEN"`

@@ -130,8 +130,8 @@ func main() {
 
 	// Execution backend selection (EXECUTION_BACKEND, default "docker"):
 	//   docker   — spawn a sandbox container per flow via the Docker API (local default, unchanged).
-	//   executor — exec into a remote long-running exec-agent over HTTP (no Docker socket / privileged
-	//              access needed; required for unprivileged Kubernetes/marketplace deployment).
+	//   executor — exec into a remote long-running exec-agent over HTTP (no host container-runtime
+	//              access needed; required for restricted Kubernetes/marketplace deployment).
 	var client docker.DockerClient
 	switch cfg.ExecutionBackend {
 	case "executor":

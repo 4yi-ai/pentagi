@@ -126,7 +126,7 @@ RUN go build -trimpath \
 # ========================================
 FROM alpine:3.23.3
 
-# Establish non-privileged execution context with docker socket access
+# Establish restricted execution context with container runtime access
 RUN addgroup -g 998 docker && \
     addgroup -S pentagi && \
     adduser -S pentagi -G pentagi && \
