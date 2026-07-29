@@ -89,24 +89,27 @@ func NewExecAgentClient(ctx context.Context, db database.Querier, cfg *config.Co
 		flowByID: make(map[string]int64),
 		execs:    make(map[string]execEntry),
 	}
-	// Probe the executor at startup, but tolerate it not being ready yet.
+	// Warm up the executor connection in the background so a slow or not-yet-
+	// ready exec-agent never delays pentagi's HTTP server from coming up.
 	//
 	// On an orchestrated platform (e.g. Kubernetes) pentagi and the exec-agent
-	// come up as separate pods with no guaranteed ordering, so a hard failure
-	// here would crash-loop the whole app whenever the executor lags a few
-	// seconds behind — which in turn fails the deploy's readiness/smoke check.
-	// We retry for a bounded window and, if the executor is still unreachable,
-	// start in a degraded mode: the HTTP server (and /healthz) come up so the
-	// app is deployable, while executor-backed actions surface their own error
-	// until the exec-agent becomes reachable. Misconfiguration is still loud in
-	// the logs rather than silent.
-	if err := c.pingWithRetry(ctx, execAgentStartupProbeTimeout, execAgentStartupProbeInterval); err != nil {
-		c.logger.WithField("executor_url", base).
-			WithError(err).
-			Warn("execution backend: exec-agent not reachable at startup; continuing in degraded mode (health/UI up, executor actions will retry)")
-		return c, nil
-	}
-	c.logger.WithField("executor_url", base).Info("execution backend: remote exec-agent")
+	// come up as separate pods with no ordering guarantee, and the exec-agent's
+	// image is large (Kali) so it can take minutes to pull. Executor-backed
+	// actions only happen while running a flow — long after boot — so blocking
+	// startup on the probe would needlessly push out readiness and fail the
+	// deploy's smoke check while the server is otherwise ready. Return the
+	// client immediately and probe asynchronously; per-request contexts still
+	// govern the actual exec calls, which surface their own error until the
+	// exec-agent is reachable.
+	go func() {
+		if err := c.pingWithRetry(context.Background(), execAgentStartupProbeTimeout, execAgentStartupProbeInterval); err != nil {
+			c.logger.WithField("executor_url", base).
+				WithError(err).
+				Warn("execution backend: exec-agent not reachable yet; executor actions will retry")
+			return
+		}
+		c.logger.WithField("executor_url", base).Info("execution backend: remote exec-agent ready")
+	}()
 	return c, nil
 }
 
