@@ -89,12 +89,59 @@ func NewExecAgentClient(ctx context.Context, db database.Querier, cfg *config.Co
 		flowByID: make(map[string]int64),
 		execs:    make(map[string]execEntry),
 	}
-	// Probe the executor so misconfiguration fails fast at startup.
-	if err := c.ping(ctx); err != nil {
-		return nil, fmt.Errorf("failed to reach exec-agent at %s: %w", base, err)
+	// Probe the executor at startup, but tolerate it not being ready yet.
+	//
+	// On an orchestrated platform (e.g. Kubernetes) pentagi and the exec-agent
+	// come up as separate pods with no guaranteed ordering, so a hard failure
+	// here would crash-loop the whole app whenever the executor lags a few
+	// seconds behind — which in turn fails the deploy's readiness/smoke check.
+	// We retry for a bounded window and, if the executor is still unreachable,
+	// start in a degraded mode: the HTTP server (and /healthz) come up so the
+	// app is deployable, while executor-backed actions surface their own error
+	// until the exec-agent becomes reachable. Misconfiguration is still loud in
+	// the logs rather than silent.
+	if err := c.pingWithRetry(ctx, execAgentStartupProbeTimeout, execAgentStartupProbeInterval); err != nil {
+		c.logger.WithField("executor_url", base).
+			WithError(err).
+			Warn("execution backend: exec-agent not reachable at startup; continuing in degraded mode (health/UI up, executor actions will retry)")
+		return c, nil
 	}
 	c.logger.WithField("executor_url", base).Info("execution backend: remote exec-agent")
 	return c, nil
+}
+
+const (
+	// How long to wait for the exec-agent to become reachable at startup before
+	// giving up and booting in degraded mode, and how often to re-probe.
+	execAgentStartupProbeTimeout  = 90 * time.Second
+	execAgentStartupProbeInterval = 3 * time.Second
+)
+
+// pingWithRetry probes the exec-agent until it responds healthy, the timeout
+// elapses, or ctx is cancelled. It returns nil on the first successful probe.
+func (c *ExecAgentClient) pingWithRetry(ctx context.Context, timeout, interval time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	var lastErr error
+	for attempt := 1; ; attempt++ {
+		if err := c.ping(ctx); err == nil {
+			if attempt > 1 {
+				c.logger.WithField("executor_url", c.baseURL).
+					WithField("attempts", attempt).
+					Info("execution backend: exec-agent became reachable")
+			}
+			return nil
+		} else {
+			lastErr = err
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("exec-agent unreachable after %s: %w", timeout, lastErr)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(interval):
+		}
+	}
 }
 
 // --- helpers -------------------------------------------------------------

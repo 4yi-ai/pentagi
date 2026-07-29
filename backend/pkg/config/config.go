@@ -267,8 +267,32 @@ func NewConfig() (*Config, error) {
 
 	ensureInstallationID(&config)
 	ensureLicenseKey(&config)
+	applyGatewayEnvFallbacks(&config)
 
 	return &config, nil
+}
+
+// defaultOpenAIServerURL mirrors the env default on Config.OpenAIServerURL and
+// is used to tell "left at default" apart from "explicitly set" below.
+const defaultOpenAIServerURL = "https://api.openai.com/v1"
+
+// applyGatewayEnvFallbacks bridges community-standard LLM env names to the ones
+// PentAGI reads. A hosting platform's LLM gateway typically injects an
+// OpenAI-compatible endpoint under OPENAI_API_KEY / OPENAI_API_BASE, whereas
+// PentAGI reads OPEN_AI_KEY / OPEN_AI_SERVER_URL. Fill the native fields from
+// the standard names only when they are unset, so local/self-hosted setups that
+// configure the native vars are never overridden.
+func applyGatewayEnvFallbacks(config *Config) {
+	if config.OpenAIKey == "" {
+		if v := os.Getenv("OPENAI_API_KEY"); v != "" {
+			config.OpenAIKey = v
+		}
+	}
+	if config.OpenAIServerURL == "" || config.OpenAIServerURL == defaultOpenAIServerURL {
+		if v := os.Getenv("OPENAI_API_BASE"); v != "" {
+			config.OpenAIServerURL = v
+		}
+	}
 }
 
 func ensureInstallationID(config *Config) {
