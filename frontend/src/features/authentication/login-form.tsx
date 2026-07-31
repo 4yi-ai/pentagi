@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
+import type { MessageKey } from '@/lib/i18n';
 import type { OAuthProvider } from '@/providers/user-provider';
 
 import Github from '@/components/icons/github';
@@ -12,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { FormSubmitButton } from '@/components/ui/form-submit-button';
 import { Input } from '@/components/ui/input';
+import { useT } from '@/lib/i18n';
 import { useUser } from '@/providers/user-provider';
 
 import { PasswordChangeForm } from './password-change-form';
@@ -39,19 +41,19 @@ const errorProviderMessage = 'Authentication failed';
 interface AuthProviderAction {
     icon: React.ReactNode;
     id: OAuthProvider;
-    name: string;
+    nameKey: MessageKey;
 }
 
 const providerActions: AuthProviderAction[] = [
     {
         icon: <Google className="size-5" />,
         id: 'google',
-        name: 'Continue with Google',
+        nameKey: 'continueWithGoogle',
     },
     {
         icon: <Github className="size-5" />,
         id: 'github',
-        name: 'Continue with GitHub',
+        nameKey: 'continueWithGitHub',
     },
 ];
 
@@ -72,6 +74,7 @@ function LoginForm({ providers, returnUrl = '/flows/new' }: LoginFormProps) {
     const [error, setError] = useState<null | string>(null);
     const [passwordChangeRequired, setPasswordChangeRequired] = useState(false);
     const navigate = useNavigate();
+    const t = useT();
     const { authInfo, isAuthenticated, login, loginWithOAuth, setAuth } = useUser();
 
     const handleSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -191,7 +194,7 @@ function LoginForm({ providers, returnUrl = '/flows/new' }: LoginFormProps) {
                                         variant="secondary"
                                     >
                                         {provider.icon}
-                                        {provider.name}
+                                        {t(provider.nameKey)}
                                     </Button>
                                 ))}
                         </div>
@@ -201,7 +204,7 @@ function LoginForm({ providers, returnUrl = '/flows/new' }: LoginFormProps) {
                                 <div className="w-full border-t border-gray-300" />
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="bg-background px-2">or</span>
+                                <span className="bg-background px-2">{t('or')}</span>
                             </div>
                         </div>
                     </>
@@ -213,12 +216,12 @@ function LoginForm({ providers, returnUrl = '/flows/new' }: LoginFormProps) {
                         name="mail"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Login</FormLabel>
+                                <FormLabel>{t('login')}</FormLabel>
                                 <FormControl>
                                     <Input
                                         {...field}
                                         autoFocus
-                                        placeholder="Enter your email"
+                                        placeholder={t('enterYourEmail')}
                                     />
                                 </FormControl>
                                 <FormMessage />
@@ -231,11 +234,11 @@ function LoginForm({ providers, returnUrl = '/flows/new' }: LoginFormProps) {
                         name="password"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Password</FormLabel>
+                                <FormLabel>{t('password')}</FormLabel>
                                 <FormControl>
                                     <Input
                                         {...field}
-                                        placeholder="Enter your password"
+                                        placeholder={t('enterYourPassword')}
                                         type="password"
                                     />
                                 </FormControl>
@@ -245,7 +248,7 @@ function LoginForm({ providers, returnUrl = '/flows/new' }: LoginFormProps) {
                     />
 
                     <FormSubmitButton className="w-full">
-                        <span>Sign in</span>
+                        <span>{t('signIn')}</span>
                     </FormSubmitButton>
 
                     {error && <FormMessage>{error}</FormMessage>}

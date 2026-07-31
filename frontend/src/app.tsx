@@ -19,6 +19,7 @@ import { DocumentTitle } from '@/components/shared/document-title';
 import PageLoader from '@/components/shared/page-loader';
 import { Toaster } from '@/components/ui/sonner';
 import client from '@/lib/apollo';
+import { I18nProvider } from '@/lib/i18n';
 import { routeTitles } from '@/lib/route-titles';
 import { FavoritesProvider } from '@/providers/favorites-provider';
 import { FlowProvider } from '@/providers/flow-provider';
@@ -274,12 +275,14 @@ const router = createBrowserRouter(
 
 function App() {
     return (
-        <ApolloProvider client={client}>
-            <ThemeProvider>
-                <Toaster />
-                <RouterProvider router={router} />
-            </ThemeProvider>
-        </ApolloProvider>
+        <I18nProvider>
+            <ApolloProvider client={client}>
+                <ThemeProvider>
+                    <Toaster />
+                    <RouterProvider router={router} />
+                </ThemeProvider>
+            </ApolloProvider>
+        </I18nProvider>
     );
 }
 
