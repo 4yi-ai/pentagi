@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { useFlow } from '@/providers/flow-provider';
 
-const CENTRAL_TAB_VALUES = ['automation', 'assistant', 'dashboard'];
+const CENTRAL_TAB_VALUES = ['automation', 'assistant'];
 
 /**
  * Detects the appropriate central tab based on priority:

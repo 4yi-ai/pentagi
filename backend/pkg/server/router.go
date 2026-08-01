@@ -44,6 +44,9 @@ import (
 
 const baseURL = "/api/v1"
 
+// sessionTimeoutSeconds is the lifetime of an authenticated session cookie.
+const sessionTimeoutSeconds = 4 * 60 * 60 // 4 hours
+
 const corsAllowGoogleOAuth = "https://accounts.google.com"
 
 // frontendRoutes defines the list of URI prefixes that should be handled by the frontend SPA.
@@ -171,7 +174,7 @@ func NewRouter(
 		services.AuthServiceConfig{
 			BaseURL:          baseURL,
 			LoginCallbackURL: oauthLoginCallbackURL,
-			SessionTimeout:   4 * 60 * 60, // 4 hours
+			SessionTimeout:   sessionTimeoutSeconds,
 		},
 		orm,
 		oauthClients,
@@ -248,6 +251,12 @@ func NewRouter(
 
 	api := router.Group(baseURL)
 	api.Use(noCacheMiddleware())
+
+	// Seamless no-login: when AUTH_AUTO_LOGIN is enabled, transparently populate
+	// an admin session before any auth middleware runs (covers the public /info
+	// endpoint and every authenticated group below). No-op when the flag is off
+	// or a valid session already exists.
+	api.Use(autoLoginMiddleware(orm, cfg, sessionTimeoutSeconds))
 
 	// Special case for local user own password change
 	changePasswordGroup := api.Group("/user")

@@ -7,7 +7,6 @@ import {
     GitFork,
     KeyRound,
     Languages,
-    LayoutDashboard,
     LibraryBig,
     LogOut,
     Monitor,
@@ -67,7 +66,6 @@ interface FlowMenuItemProps {
 
 export function MainSidebar() {
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-    const isDashboardActive = useMatch('/dashboard');
     const isFlowsActive = useMatch('/flows/*');
     const isTemplatesActive = useMatch('/templates/*');
     const isKnowledgesActive = useMatch('/knowledges/*');
@@ -127,17 +125,6 @@ export function MainSidebar() {
                                     <Link to="/flows/new">
                                         <Plus />
                                         {t('newFlow')}
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={!!isDashboardActive}
-                                >
-                                    <Link to="/dashboard">
-                                        <LayoutDashboard />
-                                        {t('dashboard')}
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

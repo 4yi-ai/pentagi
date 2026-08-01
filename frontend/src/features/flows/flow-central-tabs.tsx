@@ -1,12 +1,13 @@
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import FlowDashboard from '@/features/flows/dashboard/flow-dashboard';
 import FlowAssistantMessages from '@/features/flows/messages/flow-assistant-messages';
 import FlowAutomationMessages from '@/features/flows/messages/flow-automation-messages';
 import { useFlowTabDetection } from '@/hooks/use-flow-tab-detection';
+import { useT } from '@/lib/i18n';
 
 function FlowCentralTabs() {
     const { handleTabChange, resolvedTab } = useFlowTabDetection();
+    const t = useT();
 
     return (
         <Tabs
@@ -17,9 +18,8 @@ function FlowCentralTabs() {
             <div className="max-w-full">
                 <ScrollArea className="w-full pb-3">
                     <TabsList className="flex w-fit">
-                        <TabsTrigger value="automation">Automation</TabsTrigger>
-                        <TabsTrigger value="assistant">Assistant</TabsTrigger>
-                        <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                        <TabsTrigger value="automation">{t('tabAutomation')}</TabsTrigger>
+                        <TabsTrigger value="assistant">{t('tabAssistant')}</TabsTrigger>
                     </TabsList>
                     <ScrollBar orientation="horizontal" />
                 </ScrollArea>
@@ -36,12 +36,6 @@ function FlowCentralTabs() {
                 value="assistant"
             >
                 <FlowAssistantMessages />
-            </TabsContent>
-            <TabsContent
-                className="mt-1 flex-1 overflow-auto pr-4"
-                value="dashboard"
-            >
-                <FlowDashboard />
             </TabsContent>
         </Tabs>
     );

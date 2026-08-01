@@ -33,7 +33,6 @@ import { UserProvider } from '@/providers/user-provider';
 
 import { SystemSettingsProvider } from './providers/system-settings-provider';
 
-const Dashboard = lazy(() => import('@/pages/dashboard/dashboard'));
 const Flow = lazy(() => import('@/pages/flows/flow'));
 const FlowReport = lazy(() => import('@/pages/flows/flow-report'));
 const Flows = lazy(() => import('@/pages/flows/flows'));
@@ -132,12 +131,6 @@ const router = createBrowserRouter(
             <Route element={<ProtectedAppLayout />}>
                 {/* Main layout for chat pages */}
                 <Route element={<MainLayout />}>
-                    <Route
-                        element={<Dashboard />}
-                        handle={routeTitles.dashboard}
-                        path="dashboard"
-                    />
-
                     {/* Flows section with FlowsProvider */}
                     <Route element={<FlowsLayout />}>
                         <Route
@@ -262,11 +255,11 @@ const router = createBrowserRouter(
 
             {/* other routes */}
             <Route
-                element={<Navigate to="/dashboard" />}
+                element={<Navigate to="/flows" />}
                 path="/"
             />
             <Route
-                element={<Navigate to="/dashboard" />}
+                element={<Navigate to="/flows" />}
                 path="*"
             />
         </Route>,

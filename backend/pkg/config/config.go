@@ -63,6 +63,14 @@ type Config struct {
 	// === Authentication & Session Security ===
 	CookieSigningSalt string `env:"COOKIE_SIGNING_SALT"`
 
+	// === Seamless No-Login (behind an SSO gateway) ===
+	// When AuthAutoLogin is true, every request that lacks a valid session is
+	// transparently authenticated as the default admin user (AuthAutoLoginEmail).
+	// Intended for single-tenant deployments sitting behind an external SSO
+	// gateway. Defaults to false so self-hosted installs keep normal login.
+	AuthAutoLogin      bool   `env:"AUTH_AUTO_LOGIN" envDefault:"false"`
+	AuthAutoLoginEmail string `env:"AUTH_AUTO_LOGIN_EMAIL" envDefault:"admin@pentagi.com"`
+
 	// === Web Scraper Service Endpoints ===
 	ScraperPublicURL  string `env:"SCRAPER_PUBLIC_URL"`
 	ScraperPrivateURL string `env:"SCRAPER_PRIVATE_URL"`

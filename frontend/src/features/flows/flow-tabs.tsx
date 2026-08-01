@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import FlowAgents from '@/features/flows/agents/flow-agents';
-import FlowDashboard from '@/features/flows/dashboard/flow-dashboard';
 import FlowFiles from '@/features/flows/files/flow-files';
 import FlowAssistantMessages from '@/features/flows/messages/flow-assistant-messages';
 import FlowAutomationMessages from '@/features/flows/messages/flow-automation-messages';
@@ -13,6 +12,7 @@ import FlowTerminal from '@/features/flows/terminal/flow-terminal';
 import FlowTools from '@/features/flows/tools/flow-tools';
 import FlowVectorStores from '@/features/flows/vector-stores/flow-vector-stores';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { useT } from '@/lib/i18n';
 
 interface FlowTabsProps {
     activeTab: string;
@@ -21,6 +21,7 @@ interface FlowTabsProps {
 
 function FlowTabs({ activeTab, onTabChange }: FlowTabsProps) {
     const { isDesktop } = useBreakpoint();
+    const t = useT();
 
     const previousActiveTabRef = useRef<string>(activeTab);
 
