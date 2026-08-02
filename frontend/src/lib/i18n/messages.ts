@@ -66,8 +66,8 @@ export const en = {
 
     // New flow
     createNewFlow: 'Create a new flow',
-    newFlowDescribe: 'Describe what you would like PentAGI to test',
-    newFlowPromptPlaceholder: 'Describe what you would like PentAGI to test...',
+    newFlowDescribe: 'Describe what you would like 4YI Pentest to test',
+    newFlowPromptPlaceholder: 'Describe what you would like 4YI Pentest to test...',
     newFlowAssistantPlaceholder: 'What would you like me to help you with?',
     newFlowCreatingPlaceholder: 'Creating a new flow...',
 
@@ -162,8 +162,8 @@ export const zh: Record<MessageKey, string> = {
 
     // New flow
     createNewFlow: '创建新流程',
-    newFlowDescribe: '描述你想让 PentAGI 测试的内容',
-    newFlowPromptPlaceholder: '描述你想让 PentAGI 测试的内容…',
+    newFlowDescribe: '描述你想让 4YI Pentest 测试的内容',
+    newFlowPromptPlaceholder: '描述你想让 4YI Pentest 测试的内容…',
     newFlowAssistantPlaceholder: '有什么可以帮你的吗？',
     newFlowCreatingPlaceholder: '正在创建新流程…',
 

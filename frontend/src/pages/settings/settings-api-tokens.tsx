@@ -885,7 +885,7 @@ function SettingsAPITokens() {
                             {t('settingsCreateToken')}
                         </Button>
                     }
-                    description="Create your first API token to access PentAGI programmatically"
+                    description="Create your first API token to access 4YI Pentest programmatically"
                     icon={<Key className="text-muted-foreground size-8" />}
                     title="No API tokens configured"
                 />

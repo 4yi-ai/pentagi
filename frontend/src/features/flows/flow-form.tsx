@@ -79,7 +79,7 @@ export function FlowForm({
     isSubmitting,
     onCancel,
     onSubmit,
-    placeholder = 'Describe what you would like PentAGI to test...',
+    placeholder = 'Describe what you would like 4YI Pentest to test...',
     type,
 }: FlowFormProps) {
     const { providers, setSelectedProvider } = useProviders();

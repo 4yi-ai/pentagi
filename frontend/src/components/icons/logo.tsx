@@ -8,7 +8,7 @@ interface LogoProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 function Logo({ className, ...props }: LogoProps) {
     return (
         <img
-            alt="PentAGI"
+            alt="4YI Pentest"
             className={cn('object-contain', className)}
             src={brandLogo}
             {...props}

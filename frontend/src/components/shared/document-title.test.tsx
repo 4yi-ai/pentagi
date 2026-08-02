@@ -28,7 +28,7 @@ describe('DocumentTitle', () => {
             },
         ]);
 
-        await waitFor(() => expect(document.title).toBe('PentAGI'));
+        await waitFor(() => expect(document.title).toBe('4YI Pentest'));
     });
 
     it('renders a static title from handle', async () => {
@@ -45,7 +45,7 @@ describe('DocumentTitle', () => {
             },
         ]);
 
-        await waitFor(() => expect(document.title).toBe('Dashboard — PentAGI'));
+        await waitFor(() => expect(document.title).toBe('Dashboard — 4YI Pentest'));
     });
 
     it('renders a derived title from a handle.title function reading params', async () => {
@@ -73,7 +73,7 @@ describe('DocumentTitle', () => {
             },
         ]);
 
-        await waitFor(() => expect(document.title).toBe('Agent Selector — PentAGI'));
+        await waitFor(() => expect(document.title).toBe('Agent Selector — 4YI Pentest'));
     });
 
     it('renders the deepest matching handle (child wins over parent)', async () => {
@@ -99,7 +99,7 @@ describe('DocumentTitle', () => {
             },
         ]);
 
-        await waitFor(() => expect(document.title).toBe('API tokens — PentAGI'));
+        await waitFor(() => expect(document.title).toBe('API tokens — 4YI Pentest'));
     });
 
     it('renders a title component produced by apolloTitle()', async () => {
@@ -126,12 +126,12 @@ describe('DocumentTitle', () => {
             },
         ]);
 
-        await waitFor(() => expect(document.title).toBe('Custom #42 thing — PentAGI'));
+        await waitFor(() => expect(document.title).toBe('Custom #42 thing — 4YI Pentest'));
     });
 
     it('treats an unmarked function as a plain resolver, not a component', async () => {
         // Without the marker, DocumentTitle calls the function with params and
-        // wraps the returned string with the standard "X — PentAGI" template.
+        // wraps the returned string with the standard "X — 4YI Pentest" template.
         const resolveTitle = (params: Record<string, string | undefined>) => `Item ${params.id}`;
 
         renderAt('/items/7', [
@@ -147,7 +147,7 @@ describe('DocumentTitle', () => {
             },
         ]);
 
-        await waitFor(() => expect(document.title).toBe('Item 7 — PentAGI'));
+        await waitFor(() => expect(document.title).toBe('Item 7 — 4YI Pentest'));
     });
 
     it('falls back to APP_NAME when handle.title returns an empty string', async () => {
@@ -167,6 +167,6 @@ describe('DocumentTitle', () => {
         // An empty string from the resolver is treated as "no title" — fall back
         // to APP_NAME alone. This guards the route-level convention: pages that
         // do not want a prefix can return '' instead of omitting the handle.
-        await waitFor(() => expect(document.title).toBe('PentAGI'));
+        await waitFor(() => expect(document.title).toBe('4YI Pentest'));
     });
 });
