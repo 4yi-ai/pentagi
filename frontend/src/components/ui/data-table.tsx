@@ -58,6 +58,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useEffectAfterMount } from '@/hooks/use-effect-after-mount';
 import { useLatestRef } from '@/hooks/use-latest-ref';
 import { usePageStorageKeys } from '@/hooks/use-page-storage-keys';
+import { useT } from '@/lib/i18n';
 import { migrateLegacyTableState, updateTableState } from '@/lib/table-state';
 import { cn } from '@/lib/utils';
 
@@ -250,6 +251,7 @@ function DataTable<TData, TValue = unknown>({
     renderSubComponent,
     storageKey: explicitStorageKey,
 }: DataTableProps<TData, TValue>) {
+    const t = useT();
     const isColumnVisibilityControlled = externalColumnVisibility !== undefined;
     const isPageControlled = externalPageIndex !== undefined;
     const isFilterControlled = externalFilterValue !== undefined && onFilterChange !== undefined;
@@ -814,7 +816,10 @@ function DataTable<TData, TValue = unknown>({
                 <div className="text-muted-foreground flex-1 text-xs text-nowrap">
                     {totalRows > 0 ? (
                         <>
-                            Showing {rangeStart}–{rangeEnd} of {totalRows}
+                            {t('tableShowingRange')
+                                .replace('{start}', String(rangeStart))
+                                .replace('{end}', String(rangeEnd))
+                                .replace('{total}', String(totalRows))}
                         </>
                     ) : empty?.entityName ? (
                         `No ${empty.entityName}`
@@ -823,7 +828,7 @@ function DataTable<TData, TValue = unknown>({
                     )}
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium">Rows per page</span>
+                    <span className="text-xs font-medium">{t('tableRowsPerPage')}</span>
                     <Select
                         onValueChange={(value) => {
                             const pageSize = value === 'all' ? data.length : Number.parseInt(value, 10);
@@ -852,7 +857,9 @@ function DataTable<TData, TValue = unknown>({
                 </div>
                 {pageCount > 0 ? (
                     <div className="flex items-center justify-center text-xs font-medium lg:w-24">
-                        Page {safePageIndex + 1} of {pageCount}
+                        {t('tablePageOf')
+                            .replace('{page}', String(safePageIndex + 1))
+                            .replace('{total}', String(pageCount))}
                     </div>
                 ) : (
                     <div
@@ -862,7 +869,7 @@ function DataTable<TData, TValue = unknown>({
                 )}
                 <div className="flex items-center gap-1">
                     <Button
-                        aria-label="First page"
+                        aria-label={t('tableFirstPage')}
                         disabled={!table.getCanPreviousPage()}
                         onClick={() => table.firstPage()}
                         size="icon-xs"
@@ -871,7 +878,7 @@ function DataTable<TData, TValue = unknown>({
                         <ChevronsLeft />
                     </Button>
                     <Button
-                        aria-label="Previous page"
+                        aria-label={t('tablePreviousPage')}
                         disabled={!table.getCanPreviousPage()}
                         onClick={() => table.previousPage()}
                         size="icon-xs"
@@ -880,7 +887,7 @@ function DataTable<TData, TValue = unknown>({
                         <ChevronLeft />
                     </Button>
                     <Button
-                        aria-label="Next page"
+                        aria-label={t('tableNextPage')}
                         disabled={!table.getCanNextPage()}
                         onClick={() => table.nextPage()}
                         size="icon-xs"
@@ -889,7 +896,7 @@ function DataTable<TData, TValue = unknown>({
                         <ChevronRight />
                     </Button>
                     <Button
-                        aria-label="Last page"
+                        aria-label={t('tableLastPage')}
                         disabled={!table.getCanNextPage()}
                         onClick={() => table.lastPage()}
                         size="icon-xs"

@@ -54,6 +54,7 @@ import {
     useUpdateApiTokenMutation,
 } from '@/graphql/types';
 import { useTableState } from '@/hooks/use-table-state';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/utils/format';
 import { baseUrl } from '@/models/api';
@@ -142,6 +143,8 @@ const copyToClipboard = async (text: string): Promise<boolean> => {
 };
 
 function SettingsAPITokensHeader({ onCreateClick }: { onCreateClick: () => void }) {
+    const t = useT();
+
     return (
         <div className="flex items-center justify-between gap-4">
             <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -174,7 +177,7 @@ function SettingsAPITokensHeader({ onCreateClick }: { onCreateClick: () => void 
                 variant="secondary"
             >
                 <Plus className="size-4" />
-                Create Token
+                {t('settingsCreateToken')}
             </Button>
         </div>
     );
@@ -272,6 +275,7 @@ function EditRowActions({
 }
 
 function SettingsAPITokens() {
+    const t = useT();
     const { data, error, loading: isLoading } = useApiTokensQuery();
     const [createAPIToken, { error: createError, loading: isCreateLoading }] = useCreateApiTokenMutation();
     const [updateAPIToken, { error: updateError, loading: isUpdateLoading }] = useUpdateApiTokenMutation();
@@ -878,7 +882,7 @@ function SettingsAPITokens() {
                             variant="secondary"
                         >
                             <Plus className="size-4" />
-                            Create Token
+                            {t('settingsCreateToken')}
                         </Button>
                     }
                     description="Create your first API token to access PentAGI programmatically"

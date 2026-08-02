@@ -42,16 +42,15 @@ function FlowTabs({ activeTab, onTabChange }: FlowTabsProps) {
             <div className="max-w-full pr-4">
                 <ScrollArea className="w-full pb-3">
                     <TabsList className="flex w-fit">
-                        {!isDesktop && <TabsTrigger value="automation">Automation</TabsTrigger>}
-                        {!isDesktop && <TabsTrigger value="assistant">Assistant</TabsTrigger>}
-                        {!isDesktop && <TabsTrigger value="dashboard">Dashboard</TabsTrigger>}
-                        <TabsTrigger value="terminal">Terminal</TabsTrigger>
-                        <TabsTrigger value="tasks">Tasks</TabsTrigger>
-                        <TabsTrigger value="agents">Agents</TabsTrigger>
-                        <TabsTrigger value="tools">Searches</TabsTrigger>
-                        <TabsTrigger value="vectorStores">Vector Store</TabsTrigger>
-                        <TabsTrigger value="files">Files</TabsTrigger>
-                        <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
+                        {!isDesktop && <TabsTrigger value="automation">{t('tabAutomation')}</TabsTrigger>}
+                        {!isDesktop && <TabsTrigger value="assistant">{t('tabAssistant')}</TabsTrigger>}
+                        <TabsTrigger value="terminal">{t('tabTerminal')}</TabsTrigger>
+                        <TabsTrigger value="tasks">{t('tabTasks')}</TabsTrigger>
+                        <TabsTrigger value="agents">{t('tabAgents')}</TabsTrigger>
+                        <TabsTrigger value="tools">{t('tabSearches')}</TabsTrigger>
+                        <TabsTrigger value="vectorStores">{t('tabVectorStore')}</TabsTrigger>
+                        <TabsTrigger value="files">{t('tabFiles')}</TabsTrigger>
+                        <TabsTrigger value="screenshots">{t('tabScreenshots')}</TabsTrigger>
                     </TabsList>
                     <ScrollBar orientation="horizontal" />
                 </ScrollArea>
@@ -74,15 +73,6 @@ function FlowTabs({ activeTab, onTabChange }: FlowTabsProps) {
                     <FlowAssistantMessages className="pr-4" />
                 </TabsContent>
             )}
-            {!isDesktop && (
-                <TabsContent
-                    className="mt-1 flex-1 overflow-auto pr-4"
-                    value="dashboard"
-                >
-                    <FlowDashboard />
-                </TabsContent>
-            )}
-
             {/* Desktop and Mobile Tabs */}
             <TabsContent
                 className="mt-1 flex-1 overflow-auto"

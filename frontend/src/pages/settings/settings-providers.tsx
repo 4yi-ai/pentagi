@@ -32,6 +32,7 @@ import {
 import { StatusCard } from '@/components/ui/status-card';
 import { ProviderType, useDeleteProviderMutation, useSettingsProvidersQuery } from '@/graphql/types';
 import { useTableState } from '@/hooks/use-table-state';
+import { useT } from '@/lib/i18n';
 import { formatDate } from '@/lib/utils/format';
 type Provider = ProviderConfigFragmentFragment;
 
@@ -62,6 +63,7 @@ const providerTypes = [
 ];
 
 function SettingsProviders() {
+    const t = useT();
     const { data, error, loading: isLoading } = useSettingsProvidersQuery();
     const [deleteProvider, { error: deleteError, loading: isDeleteLoading }] = useDeleteProviderMutation();
     const [deleteErrorMessage, setDeleteErrorMessage] = useState<null | string>(null);
@@ -391,7 +393,7 @@ function SettingsProviders() {
                             variant="secondary"
                         >
                             <Plus className="size-4" />
-                            Add Provider
+                            {t('settingsAddProvider')}
                         </Button>
                     }
                     description="Get started by adding your first language model provider"
@@ -443,6 +445,7 @@ function SettingsProviders() {
 
 function SettingsProvidersHeader() {
     const navigate = useNavigate();
+    const t = useT();
 
     const handleProviderCreate = (providerType: string) => {
         navigate(`/settings/providers/new?type=${providerType}`);
@@ -467,7 +470,7 @@ function SettingsProvidersHeader() {
                         className="shrink-0"
                         variant="secondary"
                     >
-                        Create Provider
+                        {t('settingsCreateProvider')}
                         <ChevronDown className="size-4" />
                     </Button>
                 </DropdownMenuTrigger>

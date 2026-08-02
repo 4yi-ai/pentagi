@@ -30,6 +30,7 @@ import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResultType, StatusType, type TerminalFragmentFragment, useRenameFlowMutation } from '@/graphql/types';
 import { useTableState } from '@/hooks/use-table-state';
+import { type MessageKey, useT } from '@/lib/i18n';
 import { mergeHrefWithSearchParams } from '@/lib/url-params';
 import { formatDate } from '@/lib/utils/format';
 import { useFavorites } from '@/providers/favorites-provider';
@@ -37,26 +38,26 @@ import { type Flow, useFlows } from '@/providers/flows-provider';
 
 const statusConfig: Record<
     StatusType,
-    { label: string; variant: 'default' | 'destructive' | 'outline' | 'secondary' }
+    { label: MessageKey; variant: 'default' | 'destructive' | 'outline' | 'secondary' }
 > = {
     [StatusType.Created]: {
-        label: 'Created',
+        label: 'statusCreated',
         variant: 'outline',
     },
     [StatusType.Failed]: {
-        label: 'Failed',
+        label: 'statusFailed',
         variant: 'destructive',
     },
     [StatusType.Finished]: {
-        label: 'Finished',
+        label: 'statusFinished',
         variant: 'secondary',
     },
     [StatusType.Running]: {
-        label: 'Running',
+        label: 'statusRunning',
         variant: 'default',
     },
     [StatusType.Waiting]: {
-        label: 'Waiting',
+        label: 'statusWaiting',
         variant: 'outline',
     },
 };
@@ -64,6 +65,7 @@ const statusConfig: Record<
 function Flows() {
     const navigate = useNavigate();
     const location = useLocation();
+    const t = useT();
     const { deleteFlow, finishFlow, flows, isLoading } = useFlows();
     const { isFavoriteFlow, toggleFavoriteFlow } = useFavorites();
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -171,7 +173,7 @@ function Flows() {
                 header: ({ column }) => (
                     <DataTableColumnHeader
                         column={column}
-                        title="ID"
+                        title={t('colId')}
                     />
                 ),
                 maxSize: 80,
@@ -208,7 +210,7 @@ function Flows() {
                 header: ({ column }) => (
                     <DataTableColumnHeader
                         column={column}
-                        title="Title"
+                        title={t('colTitle')}
                     />
                 ),
                 meta: { searchable: true },
@@ -227,14 +229,14 @@ function Flows() {
                                 className="size-3"
                                 status={status}
                             />
-                            {config.label}
+                            {t(config.label)}
                         </Badge>
                     );
                 },
                 header: ({ column }) => (
                     <DataTableColumnHeader
                         column={column}
-                        title="Status"
+                        title={t('colStatus')}
                     />
                 ),
                 maxSize: 130,
@@ -265,7 +267,7 @@ function Flows() {
                 header: ({ column }) => (
                     <DataTableColumnHeader
                         column={column}
-                        title="Provider"
+                        title={t('colProvider')}
                     />
                 ),
                 id: 'provider',
@@ -291,7 +293,7 @@ function Flows() {
                     const terminals = flow.terminals || [];
 
                     if (terminals.length === 0) {
-                        return <span className="text-muted-foreground text-sm">No terminals</span>;
+                        return <span className="text-muted-foreground text-sm">{t('noTerminals')}</span>;
                     }
 
                     const isAnyConnected = terminals.some((t: TerminalFragmentFragment) => t.connected);
@@ -330,7 +332,7 @@ function Flows() {
                 header: ({ column }) => (
                     <DataTableColumnHeader
                         column={column}
-                        title="Terminals"
+                        title={t('colTerminals')}
                     />
                 ),
                 id: 'terminals',
@@ -355,7 +357,7 @@ function Flows() {
                 header: ({ column }) => (
                     <DataTableColumnHeader
                         column={column}
-                        title="Created"
+                        title={t('colCreated')}
                     />
                 ),
                 maxSize: 140,
@@ -379,7 +381,7 @@ function Flows() {
                 header: ({ column }) => (
                     <DataTableColumnHeader
                         column={column}
-                        title="Updated"
+                        title={t('colUpdated')}
                     />
                 ),
                 maxSize: 140,
@@ -498,6 +500,7 @@ function Flows() {
             handleFlowRenameStart,
             isFavoriteFlow,
             isRenameLoading,
+            t,
             toggleFavoriteFlow,
         ],
     );
@@ -575,7 +578,7 @@ function Flows() {
                     <BreadcrumbList className="min-w-0 flex-nowrap">
                         <BreadcrumbItem className="min-w-0">
                             <GitFork className="size-4 shrink-0" />
-                            <BreadcrumbPage className="min-w-0 truncate">Flows</BreadcrumbPage>
+                            <BreadcrumbPage className="min-w-0 truncate">{t('flows')}</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
@@ -583,7 +586,7 @@ function Flows() {
             <div className="flex shrink-0 items-center gap-2 px-4">
                 <HeaderButton
                     icon={<Plus />}
-                    label="New Flow"
+                    label={t('newFlow')}
                     onClick={() => navigate('/flows/new')}
                     variant="secondary"
                 />
@@ -597,9 +600,9 @@ function Flows() {
                 {pageHeader}
                 <div className="flex flex-col gap-4 p-4">
                     <StatusCard
-                        description="Please wait while we fetch your conversation flows"
+                        description={t('loadingFlowsDescription')}
                         icon={<Loader2 className="text-muted-foreground size-16 animate-spin" />}
-                        title="Loading flows..."
+                        title={t('loadingFlows')}
                     />
                 </div>
             </>
@@ -618,12 +621,12 @@ function Flows() {
                                 variant="secondary"
                             >
                                 <Plus />
-                                New Flow
+                                {t('newFlow')}
                             </Button>
                         }
-                        description="Get started by creating your first conversation flow"
+                        description={t('getStartedFirstFlow')}
                         icon={<GitFork className="text-muted-foreground size-8" />}
-                        title="No flows found"
+                        title={t('noFlowsFound')}
                     />
                 </div>
             </>
@@ -638,7 +641,7 @@ function Flows() {
                     columns={columns}
                     data={flows}
                     empty={{ entityName: 'flows' }}
-                    filterPlaceholder="Filter flows..."
+                    filterPlaceholder={t('filterFlows')}
                     filterValue={filter}
                     onFilterChange={setFilter}
                     onPageChange={handlePageChange}
