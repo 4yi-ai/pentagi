@@ -124,7 +124,7 @@ function SettingsProviders() {
                 header: ({ column }) => (
                     <DataTableColumnHeader
                         column={column}
-                        title="Name"
+                        title={t('settings.name')}
                     />
                 ),
                 // Name flexes to fill remaining width — fixed `size` would push
@@ -151,7 +151,7 @@ function SettingsProviders() {
                 header: ({ column }) => (
                     <DataTableColumnHeader
                         column={column}
-                        title="Type"
+                        title={t('settings.type')}
                     />
                 ),
                 meta: { searchable: true },
@@ -168,10 +168,10 @@ function SettingsProviders() {
                 header: ({ column }) => (
                     <DataTableColumnHeader
                         column={column}
-                        title="Created"
+                        title={t('settings.created')}
                     />
                 ),
-                meta: { columnMenuLabel: 'Created' },
+                meta: { columnMenuLabel: t('settings.created') },
                 size: 120,
                 sortingFn: (rowA, rowB) => {
                     const dateA = new Date(rowA.getValue('createdAt') as string);
@@ -190,9 +190,10 @@ function SettingsProviders() {
                 header: ({ column }) => (
                     <DataTableColumnHeader
                         column={column}
-                        title="Updated"
+                        title={t('settings.updated')}
                     />
                 ),
+                meta: { columnMenuLabel: t('settings.updated') },
                 size: 120,
                 sortingFn: (rowA, rowB) => {
                     const dateA = new Date(rowA.getValue('updatedAt') as string);
@@ -210,7 +211,7 @@ function SettingsProviders() {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
-                                        aria-label="Open menu"
+                                        aria-label={t('settings.openMenu')}
                                         className="size-8 p-0"
                                         variant="ghost"
                                     >
@@ -223,11 +224,11 @@ function SettingsProviders() {
                                 >
                                     <DropdownMenuItem onClick={() => handleProviderEdit(provider.id)}>
                                         <Pencil className="size-3" />
-                                        Edit
+                                        {t('settings.edit')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => handleProviderClone(provider.id)}>
                                         <Copy className="size-4" />
-                                        Clone
+                                        {t('settings.clone')}
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
@@ -237,12 +238,12 @@ function SettingsProviders() {
                                         {isDeleteLoading && deletingProvider?.id === provider.id ? (
                                             <>
                                                 <Loader2 className="size-4 animate-spin" />
-                                                Deleting...
+                                                {t('settings.deleting')}
                                             </>
                                         ) : (
                                             <>
                                                 <Trash className="size-4" />
-                                                Delete
+                                                {t('settings.delete')}
                                             </>
                                         )}
                                     </DropdownMenuItem>
@@ -258,7 +259,7 @@ function SettingsProviders() {
                 size: 48,
             },
         ],
-        [handleProviderClone, handleProviderDeleteDialogOpen, handleProviderEdit, isDeleteLoading, deletingProvider],
+        [handleProviderClone, handleProviderDeleteDialogOpen, handleProviderEdit, isDeleteLoading, deletingProvider, t],
     );
 
     const renderSubComponent = ({ row }: { row: Row<Provider> }) => {
@@ -266,7 +267,7 @@ function SettingsProviders() {
         const { agents } = provider;
 
         if (!agents) {
-            return <div className="text-muted-foreground p-4 text-sm">No agent configuration available</div>;
+            return <div className="text-muted-foreground p-4 text-sm">{t('settings.noAgentConfig')}</div>;
         }
 
         const getName = (key: string): string =>
@@ -299,7 +300,7 @@ function SettingsProviders() {
 
         return (
             <div className="bg-muted/20 border-t p-4">
-                <h4 className="font-medium">Agent Configurations</h4>
+                <h4 className="font-medium">{t('settings.agentConfigurations')}</h4>
                 <hr className="border-muted-foreground/20 my-4" />
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
                     {agentTypes.map(({ data, key, name }) => {
@@ -320,7 +321,7 @@ function SettingsProviders() {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="text-muted-foreground text-sm">No configuration available</div>
+                                    <div className="text-muted-foreground text-sm">{t('settings.noConfigAvailable')}</div>
                                 )}
                             </div>
                         );
@@ -335,11 +336,11 @@ function SettingsProviders() {
             <>
                 <ContextMenuItem onClick={() => handleProviderEdit(provider.id)}>
                     <Pencil />
-                    Edit
+                    {t('settings.edit')}
                 </ContextMenuItem>
                 <ContextMenuItem onClick={() => handleProviderClone(provider.id)}>
                     <Copy />
-                    Clone
+                    {t('settings.clone')}
                 </ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem
@@ -347,11 +348,11 @@ function SettingsProviders() {
                     onClick={() => handleProviderDeleteDialogOpen(provider)}
                 >
                     <Trash />
-                    {isDeleteLoading && deletingProvider?.id === provider.id ? 'Deleting...' : 'Delete'}
+                    {isDeleteLoading && deletingProvider?.id === provider.id ? t('settings.deleting') : t('settings.delete')}
                 </ContextMenuItem>
             </>
         ),
-        [deletingProvider, handleProviderClone, handleProviderDeleteDialogOpen, handleProviderEdit, isDeleteLoading],
+        [deletingProvider, handleProviderClone, handleProviderDeleteDialogOpen, handleProviderEdit, isDeleteLoading, t],
     );
 
     if (isLoading) {
@@ -359,9 +360,9 @@ function SettingsProviders() {
             <div className="flex flex-col gap-4">
                 <SettingsProvidersHeader />
                 <StatusCard
-                    description="Please wait while we fetch your provider configurations"
+                    description={t('settings.loadingProvidersDesc')}
                     icon={<Loader2 className="text-muted-foreground size-16 animate-spin" />}
-                    title="Loading providers..."
+                    title={t('settings.loadingProviders')}
                 />
             </div>
         );
@@ -373,7 +374,7 @@ function SettingsProviders() {
                 <SettingsProvidersHeader />
                 <Alert variant="destructive">
                     <AlertCircle className="size-4" />
-                    <AlertTitle>Error loading providers</AlertTitle>
+                    <AlertTitle>{t('settings.errorLoadingProviders')}</AlertTitle>
                     <AlertDescription>{error.message}</AlertDescription>
                 </Alert>
             </div>
@@ -396,9 +397,9 @@ function SettingsProviders() {
                             {t('settingsAddProvider')}
                         </Button>
                     }
-                    description="Get started by adding your first language model provider"
+                    description={t('settings.providersEmptyDesc')}
                     icon={<Settings className="text-muted-foreground size-8" />}
-                    title="No providers configured"
+                    title={t('settings.noProvidersConfigured')}
                 />
             </div>
         );
@@ -412,7 +413,7 @@ function SettingsProviders() {
             {(deleteError || deleteErrorMessage) && (
                 <Alert variant="destructive">
                     <AlertCircle className="size-4" />
-                    <AlertTitle>Error deleting provider</AlertTitle>
+                    <AlertTitle>{t('settings.errorDeletingProvider')}</AlertTitle>
                     <AlertDescription>{deleteError?.message || deleteErrorMessage}</AlertDescription>
                 </Alert>
             )}
@@ -420,8 +421,8 @@ function SettingsProviders() {
             <DataTable<Provider>
                 columns={columns}
                 data={providers}
-                empty={{ entityName: 'providers' }}
-                filterPlaceholder="Filter providers..."
+                empty={{ entityName: t('settings.providersEntity') }}
+                filterPlaceholder={t('settings.filterProviders')}
                 filterValue={filter}
                 onFilterChange={setFilter}
                 onPageChange={handlePageChange}
@@ -431,13 +432,13 @@ function SettingsProviders() {
             />
 
             <ConfirmationDialog
-                cancelText="Cancel"
-                confirmText="Delete"
+                cancelText={t('cancel')}
+                confirmText={t('settings.delete')}
                 handleConfirm={() => handleProviderDelete(deletingProvider?.id)}
                 handleOpenChange={setIsDeleteDialogOpen}
                 isOpen={isDeleteDialogOpen}
                 itemName={deletingProvider?.name}
-                itemType="provider"
+                itemType={t('settings.itemTypeProvider')}
             />
         </div>
     );
@@ -453,7 +454,7 @@ function SettingsProvidersHeader() {
 
     return (
         <div className="flex items-center justify-between gap-4">
-            <p className="text-muted-foreground min-w-0 flex-1 truncate">Manage language model providers</p>
+            <p className="text-muted-foreground min-w-0 flex-1 truncate">{t('settings.manageProviders')}</p>
 
             {/*
              * "Create Provider" is a dropdown trigger, not a submit-style action — it
@@ -466,7 +467,7 @@ function SettingsProvidersHeader() {
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button
-                        aria-label="Create provider — choose type"
+                        aria-label={t('settings.createProviderAria')}
                         className="shrink-0"
                         variant="secondary"
                     >

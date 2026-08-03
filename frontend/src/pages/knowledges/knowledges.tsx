@@ -28,6 +28,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { StatusCard } from '@/components/ui/status-card';
 import { KnowledgeDocType } from '@/graphql/types';
 import { useTableState } from '@/hooks/use-table-state';
+import { useT } from '@/lib/i18n';
 import { mergeHrefWithSearchParams, URL_PARAMS } from '@/lib/url-params';
 import { type Knowledge, useKnowledges } from '@/providers/knowledges-provider';
 
@@ -56,6 +57,7 @@ const docTypeSubtype = (k: Knowledge): null | string => {
 function Knowledges() {
     const navigate = useNavigate();
     const location = useLocation();
+    const t = useT();
     const { deleteKnowledge, isLoading, knowledges, updateKnowledge } = useKnowledges();
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [deletingKnowledge, setDeletingKnowledge] = useState<Knowledge | null>(null);
@@ -147,7 +149,7 @@ function Knowledges() {
                 content: knowledge.content,
                 question: newQuestion,
             });
-            toast.success('Knowledge renamed successfully');
+            toast.success(t('kb.renamedSuccess'));
             setEditingKnowledgeId(null);
         } catch {
             // Error already handled in provider with toast
@@ -207,11 +209,11 @@ function Knowledges() {
             header: ({ column }) => (
                 <DataTableColumnHeader
                     column={column}
-                    title="Type"
+                    title={t('kb.type')}
                 />
             ),
             maxSize: 180,
-            meta: { columnMenuLabel: 'Type', searchable: true },
+            meta: { columnMenuLabel: t('kb.type'), searchable: true },
             minSize: 110,
             size: 130,
         },
@@ -232,7 +234,7 @@ function Knowledges() {
                                 inputRef={editingInputRef}
                                 onCancel={handleKnowledgeRenameCancel}
                                 onSave={handleKnowledgeRenameSave}
-                                placeholder="Knowledge question"
+                                placeholder={t('kb.questionPlaceholder')}
                             />
                         </div>
                     );
@@ -250,10 +252,10 @@ function Knowledges() {
             header: ({ column }) => (
                 <DataTableColumnHeader
                     column={column}
-                    title="Question"
+                    title={t('kb.question')}
                 />
             ),
-            meta: { columnMenuLabel: 'Question', searchable: true },
+            meta: { columnMenuLabel: t('kb.question'), searchable: true },
             minSize: 180,
             size: 280,
         },
@@ -273,10 +275,12 @@ function Knowledges() {
             },
             enableSorting: false,
             header: () => (
-                <span className="text-muted-foreground inline-flex items-center text-sm font-medium">Preview</span>
+                <span className="text-muted-foreground inline-flex items-center text-sm font-medium">
+                    {t('kb.preview')}
+                </span>
             ),
             maxSize: 800,
-            meta: { columnMenuLabel: 'Preview', searchable: true },
+            meta: { columnMenuLabel: t('kb.preview'), searchable: true },
             minSize: 160,
             size: 380,
         },
@@ -298,7 +302,7 @@ function Knowledges() {
                             className="shrink-0 whitespace-nowrap"
                             variant={k.manual ? 'secondary' : 'outline'}
                         >
-                            {k.manual ? 'manual' : 'agent'}
+                            {k.manual ? t('kb.manual') : t('kb.agent')}
                         </Badge>
                     </div>
                 );
@@ -306,12 +310,12 @@ function Knowledges() {
             enableSorting: false,
             header: () => (
                 <span className="text-muted-foreground inline-flex w-full items-center justify-end text-sm font-medium">
-                    Flags
+                    {t('kb.flags')}
                 </span>
             ),
             id: 'flags',
             maxSize: 200,
-            meta: { columnMenuLabel: 'Flags' },
+            meta: { columnMenuLabel: t('kb.flags') },
             minSize: 110,
             size: 150,
         },
@@ -324,7 +328,7 @@ function Knowledges() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
-                                    aria-label="Open menu"
+                                    aria-label={t('kb.openMenu')}
                                     className="size-8 p-0"
                                     onClick={(event) => event.stopPropagation()}
                                     variant="ghost"
@@ -339,11 +343,11 @@ function Knowledges() {
                             >
                                 <DropdownMenuItem onClick={() => handleOpen(k.id)}>
                                     <Pencil />
-                                    Edit
+                                    {t('kb.edit')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleKnowledgeRenameStart(k)}>
                                     <PencilLine />
-                                    Rename
+                                    {t('kb.rename')}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -353,12 +357,12 @@ function Knowledges() {
                                     {deletingIds.has(k.id) ? (
                                         <>
                                             <Loader2 className="size-4 animate-spin" />
-                                            Deleting...
+                                            {t('kb.deleting')}
                                         </>
                                     ) : (
                                         <>
                                             <Trash className="size-4" />
-                                            Delete
+                                            {t('kb.delete')}
                                         </>
                                     )}
                                 </DropdownMenuItem>
@@ -381,11 +385,11 @@ function Knowledges() {
         <>
             <ContextMenuItem onClick={() => handleOpen(k.id)}>
                 <Pencil />
-                Edit
+                {t('kb.edit')}
             </ContextMenuItem>
             <ContextMenuItem onClick={() => handleKnowledgeRenameStart(k)}>
                 <PencilLine />
-                Rename
+                {t('kb.rename')}
             </ContextMenuItem>
             <ContextMenuSeparator />
             <ContextMenuItem
@@ -393,7 +397,7 @@ function Knowledges() {
                 onClick={() => handleDeleteDialogOpen(k)}
             >
                 <Trash />
-                {deletingIds.has(k.id) ? 'Deleting...' : 'Delete'}
+                {deletingIds.has(k.id) ? t('kb.deleting') : t('kb.delete')}
             </ContextMenuItem>
         </>
     );
@@ -410,14 +414,14 @@ function Knowledges() {
                     <BreadcrumbList className="min-w-0 flex-nowrap">
                         <BreadcrumbItem className="min-w-0">
                             <LibraryBig className="size-4 shrink-0" />
-                            <BreadcrumbPage className="min-w-0 truncate">Knowledges</BreadcrumbPage>
+                            <BreadcrumbPage className="min-w-0 truncate">{t('knowledges')}</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
             </div>
             <div className="flex shrink-0 items-center gap-2 px-4">
                 <InputSearch
-                    ariaLabel="Search knowledge documents"
+                    ariaLabel={t('kb.searchAria')}
                     // Use Mod+K — Mod+F is reserved as the page-wide default
                     // because we don't want to conflict with the browser's
                     // own find-in-page on every screen, but this list is one
@@ -425,12 +429,12 @@ function Knowledges() {
                     hotkey="k"
                     maxWidth={220}
                     onSearchChange={handleSemanticQueryChange}
-                    placeholder="Semantic search..."
+                    placeholder={t('kb.semanticSearch')}
                     searchQuery={semanticQuery}
                 />
                 <HeaderButton
                     icon={<Plus />}
-                    label="New Knowledge"
+                    label={t('kb.newKnowledge')}
                     onClick={() => navigate('/knowledges/new')}
                     variant="secondary"
                 />
@@ -444,9 +448,9 @@ function Knowledges() {
                 {pageHeader}
                 <div className="flex flex-col gap-4 p-4">
                     <StatusCard
-                        description="Please wait while we fetch your knowledge documents"
+                        description={t('kb.loadingDesc')}
                         icon={<Loader2 className="text-muted-foreground size-16 animate-spin" />}
-                        title="Loading knowledges..."
+                        title={t('kb.loading')}
                     />
                 </div>
             </>
@@ -465,12 +469,12 @@ function Knowledges() {
                                 variant="secondary"
                             >
                                 <Plus />
-                                New Knowledge
+                                {t('kb.newKnowledge')}
                             </Button>
                         }
-                        description="Create your first knowledge document to enrich the vector store"
+                        description={t('kb.emptyDesc')}
                         icon={<LibraryBig className="text-muted-foreground size-8" />}
-                        title="No knowledge documents yet"
+                        title={t('kb.emptyTitle')}
                     />
                 </div>
             </>
@@ -484,8 +488,8 @@ function Knowledges() {
                 <DataTable
                     columns={columns}
                     data={knowledges}
-                    empty={{ entityName: 'knowledge documents' }}
-                    filterPlaceholder="Filter knowledge documents..."
+                    empty={{ entityName: t('kb.entityName') }}
+                    filterPlaceholder={t('kb.filter')}
                     filterValue={filter}
                     onFilterChange={setFilter}
                     onRowClick={(k) => {
@@ -497,13 +501,13 @@ function Knowledges() {
                 />
 
                 <ConfirmationDialog
-                    cancelText="Cancel"
-                    confirmText="Delete"
+                    cancelText={t('cancel')}
+                    confirmText={t('kb.delete')}
                     handleConfirm={handleDelete}
                     handleOpenChange={setIsDeleteDialogOpen}
                     isOpen={isDeleteDialogOpen}
                     itemName={deletingKnowledge?.question}
-                    itemType="knowledge document"
+                    itemType={t('kb.itemType')}
                 />
             </div>
         </>

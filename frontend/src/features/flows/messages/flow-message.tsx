@@ -8,6 +8,7 @@ import Terminal from '@/components/shared/terminal';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MessageLogType, ResultFormat } from '@/graphql/types';
 import { copyMessageToClipboard } from '@/lib/clipboard';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/utils/format';
 
@@ -27,6 +28,7 @@ const containsSearchValue = (text: null | string | undefined, searchValue: strin
 };
 
 function FlowMessage({ log, searchValue = '' }: FlowMessageProps) {
+    const t = useT();
     const { createdAt, message, result, resultFormat = ResultFormat.Plain, thinking, type } = log;
     const isReportMessage = type === MessageLogType.Report;
 
@@ -165,7 +167,7 @@ function FlowMessage({ log, searchValue = '' }: FlowMessageProps) {
                             className="cursor-pointer"
                             onClick={toggleThinking}
                         >
-                            {isThinkingVisible ? 'Hide thinking' : 'Show thinking'}
+                            {isThinkingVisible ? t('flowDetail.hideThinking') : t('flowDetail.showThinking')}
                         </div>
                     </div>
                 )}
@@ -190,7 +192,7 @@ function FlowMessage({ log, searchValue = '' }: FlowMessageProps) {
                             className="cursor-pointer"
                             onClick={toggleDetails}
                         >
-                            {isDetailsVisible ? 'Hide details' : 'Show details'}
+                            {isDetailsVisible ? t('flowDetail.hideDetails') : t('flowDetail.showDetails')}
                         </div>
                         {renderDetailsContent()}
                     </div>
@@ -209,7 +211,7 @@ function FlowMessage({ log, searchValue = '' }: FlowMessageProps) {
                             onClick={handleCopy}
                         />
                     </TooltipTrigger>
-                    <TooltipContent>Copy</TooltipContent>
+                    <TooltipContent>{t('flowDetail.copy')}</TooltipContent>
                 </Tooltip>
                 <span className="text-muted-foreground/50">{formatDate(new Date(createdAt))}</span>
                 <span className="text-muted-foreground/50">{log.id}</span>

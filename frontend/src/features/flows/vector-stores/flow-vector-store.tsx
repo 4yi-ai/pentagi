@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import FlowAgentIcon from '@/features/flows/agents/flow-agent-icon';
 import { VectorStoreAction } from '@/graphql/types';
 import { copyMessageToClipboard } from '@/lib/clipboard';
+import { useT } from '@/lib/i18n';
 import { formatDate } from '@/lib/utils/format';
 
 import FlowVectorStoreActionIcon from './flow-vector-store-action-icon';
@@ -67,6 +68,7 @@ const containsSearchValue = (text: null | string | undefined, searchValue: strin
 };
 
 function FlowVectorStore({ log, searchValue = '' }: FlowVectorStoreProps) {
+    const t = useT();
     const { action, createdAt, executor, initiator, query, result, subtaskId, taskId } = log;
 
     const searchChecks = useMemo(() => {
@@ -169,19 +171,19 @@ function FlowVectorStore({ log, searchValue = '' }: FlowVectorStoreProps) {
                             onClick={handleCopy}
                         />
                     </TooltipTrigger>
-                    <TooltipContent>Copy</TooltipContent>
+                    <TooltipContent>{t('flowDetail.copy')}</TooltipContent>
                 </Tooltip>
                 <span className="text-muted-foreground/50">{formatDate(new Date(createdAt))}</span>
                 {taskId && (
                     <>
                         <span className="text-muted-foreground/50">|</span>
-                        <span className="text-muted-foreground/50">Task ID: {taskId}</span>
+                        <span className="text-muted-foreground/50">{t('flowDetail.taskId')}: {taskId}</span>
                     </>
                 )}
                 {subtaskId && (
                     <>
                         <span className="text-muted-foreground/50">|</span>
-                        <span className="text-muted-foreground/50">Subtask ID: {subtaskId}</span>
+                        <span className="text-muted-foreground/50">{t('flowDetail.subtaskId')}: {subtaskId}</span>
                     </>
                 )}
             </div>

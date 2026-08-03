@@ -11,6 +11,7 @@ import { Form, FormControl, FormField } from '@/components/ui/form';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group';
 import { StatusType } from '@/graphql/types';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { useFlow } from '@/providers/flow-provider';
 
@@ -33,6 +34,7 @@ const searchFormSchema = z.object({
 });
 
 function FlowAutomationMessages({ className }: FlowAutomationMessagesProps) {
+    const t = useT();
     const { flowData, flowId, flowStatus, stopAutomation, submitAutomationMessage } = useFlow();
 
     const logs = useMemo(() => flowData?.messageLogs ?? [], [flowData?.messageLogs]);
@@ -134,32 +136,32 @@ function FlowAutomationMessages({ className }: FlowAutomationMessagesProps) {
 
     const placeholder = useMemo(() => {
         if (!flowId) {
-            return 'Select a flow...';
+            return t('flowDetail.selectAFlowPlaceholder');
         }
 
         switch (flowStatus) {
             case StatusType.Created: {
-                return 'The flow is starting...';
+                return t('flowDetail.flowStarting');
             }
 
             case StatusType.Failed:
             case StatusType.Finished: {
-                return 'This flow has ended. Create a new one to continue.';
+                return t('flowDetail.flowEnded');
             }
 
             case StatusType.Running: {
-                return '4YI Pentest is working... Click Stop to interrupt';
+                return t('flowDetail.flowWorking');
             }
 
             case StatusType.Waiting: {
-                return 'Provide additional context or instructions...';
+                return t('flowDetail.provideContext');
             }
 
             default: {
-                return 'Type your message...';
+                return t('flowDetail.typeYourMessage');
             }
         }
-    }, [flowId, flowStatus]);
+    }, [flowId, flowStatus, t]);
 
     const handleSubmitMessage = async (values: FlowFormValues) => {
         setIsSubmitting(true);
@@ -214,7 +216,7 @@ function FlowAutomationMessages({ className }: FlowAutomationMessagesProps) {
                                         <InputGroupInput
                                             {...field}
                                             autoComplete="off"
-                                            placeholder="Search messages..."
+                                            placeholder={t('flowDetail.searchMessages')}
                                             type="text"
                                         />
                                         {field.value && (
@@ -288,8 +290,8 @@ function FlowAutomationMessages({ className }: FlowAutomationMessagesProps) {
                         <EmptyMedia variant="icon">
                             <ListFilter />
                         </EmptyMedia>
-                        <EmptyTitle>No messages found</EmptyTitle>
-                        <EmptyDescription>Try adjusting your search or filter parameters</EmptyDescription>
+                        <EmptyTitle>{t('flowDetail.noMessagesFound')}</EmptyTitle>
+                        <EmptyDescription>{t('flowDetail.adjustSearchFilter')}</EmptyDescription>
                     </EmptyHeader>
                     <EmptyContent>
                         <Button
@@ -297,7 +299,7 @@ function FlowAutomationMessages({ className }: FlowAutomationMessagesProps) {
                             variant="outline"
                         >
                             <X />
-                            Reset filters
+                            {t('flowDetail.resetFilters')}
                         </Button>
                     </EmptyContent>
                 </Empty>
@@ -307,11 +309,8 @@ function FlowAutomationMessages({ className }: FlowAutomationMessagesProps) {
                         <EmptyMedia variant="icon">
                             <Inbox />
                         </EmptyMedia>
-                        <EmptyTitle>No active tasks</EmptyTitle>
-                        <EmptyDescription>
-                            Starting a new task may take some time as the 4YI Pentest agent downloads the required Docker
-                            image
-                        </EmptyDescription>
+                        <EmptyTitle>{t('flowDetail.noActiveTasks')}</EmptyTitle>
+                        <EmptyDescription>{t('flowDetail.noActiveTasksDescription')}</EmptyDescription>
                     </EmptyHeader>
                 </Empty>
             )}

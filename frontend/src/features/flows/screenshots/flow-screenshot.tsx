@@ -8,6 +8,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/utils/format';
+import { useT } from '@/lib/i18n';
 import { baseUrl } from '@/models/api';
 
 interface FlowScreenshotProps {
@@ -15,6 +16,7 @@ interface FlowScreenshotProps {
 }
 
 function FlowScreenshot({ screenshot }: FlowScreenshotProps) {
+    const t = useT();
     const [isExpanded, setIsExpanded] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const imageRef = useRef<HTMLDivElement>(null);
@@ -62,7 +64,7 @@ function FlowScreenshot({ screenshot }: FlowScreenshotProps) {
                                     <span className="truncate font-semibold">{screenshot.url}</span>
                                 </Link>
                             </TooltipTrigger>
-                            <TooltipContent>Source URL</TooltipContent>
+                            <TooltipContent>{t('flowDetail.sourceUrl')}</TooltipContent>
                         </Tooltip>
                     </div>
 

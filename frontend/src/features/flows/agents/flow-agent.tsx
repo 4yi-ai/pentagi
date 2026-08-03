@@ -6,6 +6,7 @@ import type { AgentLogFragmentFragment } from '@/graphql/types';
 import Markdown from '@/components/shared/markdown';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { copyMessageToClipboard } from '@/lib/clipboard';
+import { useT } from '@/lib/i18n';
 import { formatDate } from '@/lib/utils/format';
 
 import FlowAgentIcon from './flow-agent-icon';
@@ -26,6 +27,7 @@ const containsSearchValue = (text: null | string | undefined, searchValue: strin
 };
 
 function FlowAgent({ log, searchValue = '' }: FlowAgentProps) {
+    const t = useT();
     const { createdAt, executor, initiator, result, subtaskId, task, taskId } = log;
 
     const searchChecks = useMemo(() => {
@@ -123,19 +125,19 @@ function FlowAgent({ log, searchValue = '' }: FlowAgentProps) {
                             onClick={handleCopy}
                         />
                     </TooltipTrigger>
-                    <TooltipContent>Copy</TooltipContent>
+                    <TooltipContent>{t('flowDetail.copy')}</TooltipContent>
                 </Tooltip>
                 <span className="text-muted-foreground/50">{formatDate(new Date(createdAt))}</span>
                 {taskId && (
                     <>
                         <span className="text-muted-foreground/50">|</span>
-                        <span className="text-muted-foreground/50">Task ID: {taskId}</span>
+                        <span className="text-muted-foreground/50">{t('flowDetail.taskId')}: {taskId}</span>
                     </>
                 )}
                 {subtaskId && (
                     <>
                         <span className="text-muted-foreground/50">|</span>
-                        <span className="text-muted-foreground/50">Subtask ID: {subtaskId}</span>
+                        <span className="text-muted-foreground/50">{t('flowDetail.subtaskId')}: {subtaskId}</span>
                     </>
                 )}
             </div>

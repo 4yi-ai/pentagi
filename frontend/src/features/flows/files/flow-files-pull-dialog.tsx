@@ -28,6 +28,7 @@ import {
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useT } from '@/lib/i18n';
 
 import { findPullConflicts } from './flow-files-conflicts';
 import { CONTAINER_DEFAULT_PATH, CONTAINER_PATH_PREFIX } from './flow-files-constants';
@@ -123,6 +124,7 @@ export function FlowFilesPullDialog({ cachedFiles, flowId, isOpen, onClose, onSu
  * owns the listing browser UI and the per-action plan derivation.
  */
 function FlowFilesPullDialogForm({ cachedFiles, flowId, onClose, onSuccess }: FlowFilesPullDialogFormProps) {
+    const t = useT();
     const [currentPath, setCurrentPath] = useState<string>(CONTAINER_DEFAULT_PATH);
     const [pathInputValue, setPathInputValue] = useState<string>(CONTAINER_DEFAULT_PATH);
     const [selectedPaths, setSelectedPaths] = useState<ReadonlySet<string>>(() => new Set<string>());
@@ -310,19 +312,21 @@ function FlowFilesPullDialogForm({ cachedFiles, flowId, onClose, onSuccess }: Fl
 
     const primaryLabel = useMemo(() => {
         if (selectedPaths.size === 0) {
-            return `Pull ${currentPath}`;
+            return t('flowDetail.pullPath').replace('{path}', currentPath);
         }
 
-        return `Pull ${selectedPaths.size} ${pluralizeItems(selectedPaths.size)}`;
-    }, [currentPath, selectedPaths.size]);
+        return t('flowDetail.pullNItems')
+            .replace('{count}', String(selectedPaths.size))
+            .replace('{items}', pluralizeItems(selectedPaths.size));
+    }, [currentPath, selectedPaths.size, t]);
 
     const overwriteLabel = useMemo(() => {
         if (selectedPaths.size === 0) {
-            return 'Pull with overwrite';
+            return t('flowDetail.pullWithOverwrite');
         }
 
-        return `Pull ${selectedPaths.size} with overwrite`;
-    }, [selectedPaths.size]);
+        return t('flowDetail.pullNWithOverwrite').replace('{count}', String(selectedPaths.size));
+    }, [selectedPaths.size, t]);
 
     // The FileManager doesn't ship a "selection only" mode — passing an empty
     // bulk-actions array is the cheapest way to surface the checkboxes.
@@ -334,7 +338,7 @@ function FlowFilesPullDialogForm({ cachedFiles, flowId, onClose, onSuccess }: Fl
                 <EmptyMedia variant="icon">
                     <FolderOpen />
                 </EmptyMedia>
-                <EmptyTitle>Failed to list container</EmptyTitle>
+                <EmptyTitle>{t('flowDetail.failedToListContainer')}</EmptyTitle>
                 <EmptyDescription>{listingError.message}</EmptyDescription>
             </EmptyHeader>
         </Empty>
@@ -344,9 +348,9 @@ function FlowFilesPullDialogForm({ cachedFiles, flowId, onClose, onSuccess }: Fl
                 <EmptyMedia variant="icon">
                     <FolderOpen />
                 </EmptyMedia>
-                <EmptyTitle>Directory is empty</EmptyTitle>
+                <EmptyTitle>{t('flowDetail.directoryEmpty')}</EmptyTitle>
                 <EmptyDescription>
-                    Nothing to pull from <code>{currentPath}</code>.
+                    {t('flowDetail.nothingToPullFrom')} <code>{currentPath}</code>
                 </EmptyDescription>
             </EmptyHeader>
         </Empty>
@@ -358,7 +362,7 @@ function FlowFilesPullDialogForm({ cachedFiles, flowId, onClose, onSuccess }: Fl
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <ArrowDownToLine className="size-4" />
-                        Pull from container
+                        {t('flowDetail.pullFromContainerTitle')}
                     </DialogTitle>
                     <DialogDescription>
                         Browse the running container and select files or directories to sync into the local cache under{' '}
@@ -369,7 +373,7 @@ function FlowFilesPullDialogForm({ cachedFiles, flowId, onClose, onSuccess }: Fl
                 <div className="flex flex-col gap-3">
                     <div className="flex items-end gap-2">
                         <div className="flex-1">
-                            <Label className="mb-1.5 block text-sm font-normal">Container path</Label>
+                            <Label className="mb-1.5 block text-sm font-normal">{t('flowDetail.containerPath')}</Label>
                             <Autocomplete
                                 onCommit={navigateTo}
                                 onValueChange={setPathInputValue}
@@ -381,7 +385,7 @@ function FlowFilesPullDialogForm({ cachedFiles, flowId, onClose, onSuccess }: Fl
                                     placeholder="/work"
                                 />
                                 <AutocompleteContent>
-                                    <AutocompleteEmpty>No matching paths</AutocompleteEmpty>
+                                    <AutocompleteEmpty>{t('flowDetail.noMatchingPaths')}</AutocompleteEmpty>
                                     <AutocompleteGroup>
                                         {pathSuggestions.map((suggestion) => (
                                             <AutocompleteItem
@@ -410,7 +414,7 @@ function FlowFilesPullDialogForm({ cachedFiles, flowId, onClose, onSuccess }: Fl
                                     </Button>
                                 </span>
                             </TooltipTrigger>
-                            <TooltipContent>Parent directory</TooltipContent>
+                            <TooltipContent>{t('flowDetail.parentDirectory')}</TooltipContent>
                         </Tooltip>
 
                         <Tooltip>
@@ -427,7 +431,7 @@ function FlowFilesPullDialogForm({ cachedFiles, flowId, onClose, onSuccess }: Fl
                                     </Button>
                                 </span>
                             </TooltipTrigger>
-                            <TooltipContent>Refresh listing</TooltipContent>
+                            <TooltipContent>{t('flowDetail.refreshListing')}</TooltipContent>
                         </Tooltip>
                     </div>
 
@@ -450,7 +454,7 @@ function FlowFilesPullDialogForm({ cachedFiles, flowId, onClose, onSuccess }: Fl
                         type="button"
                         variant="outline"
                     >
-                        Cancel
+                        {t('cancel')}
                     </Button>
                     <OverwriteButtons
                         isDisabled={isPullDisabled}

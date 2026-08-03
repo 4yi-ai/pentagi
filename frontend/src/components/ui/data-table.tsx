@@ -167,8 +167,10 @@ interface DataTableFilterProps {
 }
 
 function DataTableEmptyState({ entityName, filterValue }: DataTableEmptyStateProps) {
+    const t = useT();
+
     if (!entityName) {
-        return <>No results.</>;
+        return <>{t('tableNoResults')}</>;
     }
 
     const hasFilter = filterValue.length > 0;
@@ -180,10 +182,13 @@ function DataTableEmptyState({ entityName, filterValue }: DataTableEmptyStatePro
                 <EmptyMedia variant="icon">
                     <Icon />
                 </EmptyMedia>
-                <EmptyTitle>{hasFilter ? 'No matches' : `No ${entityName} yet`}</EmptyTitle>
+                <EmptyTitle>
+                    {hasFilter ? t('tableNoMatches') : t('tableEmptyTitle').replace('{entity}', entityName)}
+                </EmptyTitle>
                 {hasFilter ? (
                     <EmptyDescription>
-                        No {entityName} match <code>{filterValue}</code>. Try a different query.
+                        {t('tableNoMatchDesc').replace('{entity}', entityName)} <code>{filterValue}</code>
+                        {t('tableTryDifferentQuery')}
                     </EmptyDescription>
                 ) : null}
             </EmptyHeader>
@@ -822,9 +827,9 @@ function DataTable<TData, TValue = unknown>({
                                 .replace('{total}', String(totalRows))}
                         </>
                     ) : empty?.entityName ? (
-                        `No ${empty.entityName}`
+                        t('tableEmptyShort').replace('{entity}', empty.entityName)
                     ) : (
-                        'No results'
+                        t('tableNoResults')
                     )}
                 </div>
                 <div className="flex items-center gap-2">

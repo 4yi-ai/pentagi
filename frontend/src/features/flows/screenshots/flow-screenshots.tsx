@@ -10,6 +10,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/
 import { Form, FormControl, FormField } from '@/components/ui/form';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
+import { useT } from '@/lib/i18n';
 import { useFlow } from '@/providers/flow-provider';
 
 import FlowScreenshot from './flow-screenshot';
@@ -19,6 +20,7 @@ const searchFormSchema = z.object({
 });
 
 function FlowScreenshots() {
+    const t = useT();
     const { flowData, flowId } = useFlow();
 
     const screenshots = useMemo(() => flowData?.screenshots ?? [], [flowData?.screenshots]);
@@ -97,7 +99,7 @@ function FlowScreenshots() {
                                         <InputGroupInput
                                             {...field}
                                             autoComplete="off"
-                                            placeholder="Search screenshots..."
+                                            placeholder={t('flowDetail.searchScreenshots')}
                                             type="text"
                                         />
                                         {field.value && (
@@ -158,8 +160,8 @@ function FlowScreenshots() {
                         <EmptyMedia variant="icon">
                             <Camera />
                         </EmptyMedia>
-                        <EmptyTitle>No screenshots available</EmptyTitle>
-                        <EmptyDescription>Screenshots will appear here once the agent captures them</EmptyDescription>
+                        <EmptyTitle>{t('flowDetail.noScreenshotsAvailable')}</EmptyTitle>
+                        <EmptyDescription>{t('flowDetail.noScreenshotsAvailableDescription')}</EmptyDescription>
                     </EmptyHeader>
                 </Empty>
             )}

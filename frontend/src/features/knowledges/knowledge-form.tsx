@@ -18,6 +18,7 @@ import { Form } from '@/components/ui/form';
 import { Spinner } from '@/components/ui/spinner';
 import { KnowledgeAnswerType, KnowledgeDocType, KnowledgeGuideType, useAnonymizeTextMutation } from '@/graphql/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { useT } from '@/lib/i18n';
 import { Log } from '@/lib/log';
 import { useUser } from '@/providers/user-provider';
 
@@ -189,6 +190,7 @@ interface KnowledgeFormProps {
 
 export function KnowledgeForm({ initialValues, isNew, knowledge, onSubmit }: KnowledgeFormProps) {
     const navigate = useNavigate();
+    const t = useT();
     const { isDesktop } = useBreakpoint();
     const [isSaving, setIsSaving] = useState(false);
     const [isAnonymizing, setIsAnonymizing] = useState(false);
@@ -329,7 +331,7 @@ export function KnowledgeForm({ initialValues, isNew, knowledge, onSubmit }: Kno
         <HeaderButton
             disabled={!canSubmit}
             icon={isSaving ? <Spinner variant="circle" /> : <Save aria-hidden="true" />}
-            label={isNew ? 'Create' : 'Save'}
+            label={isNew ? t('kb.create') : t('kb.save')}
             type="submit"
         />
     );
@@ -354,26 +356,26 @@ export function KnowledgeForm({ initialValues, isNew, knowledge, onSubmit }: Kno
             const anonymizedContent = data?.anonymizeText;
 
             if (anonymizedContent == null) {
-                toast.error('Anonymizer returned no result');
+                toast.error(t('kb.anonymizeNoResult'));
 
                 return;
             }
 
             if (anonymizedContent === currentContent) {
-                toast.info('No sensitive data detected');
+                toast.info(t('kb.anonymizeNoData'));
 
                 return;
             }
 
             form.setValue('content', anonymizedContent, { shouldDirty: true, shouldValidate: true });
-            toast.success('Content anonymized');
+            toast.success(t('kb.anonymizeSuccess'));
         } catch (error) {
             Log.error('Failed to anonymize content', error);
-            toast.error(error instanceof Error ? error.message : 'Failed to anonymize content');
+            toast.error(error instanceof Error ? error.message : t('kb.anonymizeFailed'));
         } finally {
             setIsAnonymizing(false);
         }
-    }, [anonymizeMutation, form]);
+    }, [anonymizeMutation, form, t]);
 
     return (
         <>
