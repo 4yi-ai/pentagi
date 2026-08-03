@@ -47,6 +47,7 @@ import { getProviderDisplayName } from '@/models/provider';
 import { useProviders } from '@/providers/providers-provider';
 import { useResources } from '@/providers/resources-provider';
 import { type Template, useTemplates } from '@/providers/templates-provider';
+import { useT } from '@/lib/i18n';
 
 const formSchema = z.object({
     message: z.string().trim().min(1, { message: 'Message cannot be empty' }),
@@ -82,6 +83,7 @@ export function FlowForm({
     placeholder = 'Describe what you would like 4YI Pentest to test...',
     type,
 }: FlowFormProps) {
+    const t = useT();
     const { providers, setSelectedProvider } = useProviders();
     const { templates } = useTemplates();
     const { resources } = useResources();
@@ -663,13 +665,13 @@ export function FlowForm({
                                                                         useAgentsField.onChange(!useAgentsField.value)
                                                                     }
                                                                 >
-                                                                    Use Agents
+                                                                    {t('flowDetail.useAgents')}
                                                                 </FormLabel>
                                                             </FormItem>
                                                         </TooltipTrigger>
                                                         <TooltipContent>
                                                             <p className="max-w-48">
-                                                                Enable multi-agent collaboration for complex tasks
+                                                                {t('flowDetail.useAgentsTooltip')}
                                                             </p>
                                                         </TooltipContent>
                                                     </Tooltip>
