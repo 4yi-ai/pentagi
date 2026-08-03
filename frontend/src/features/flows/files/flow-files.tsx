@@ -23,6 +23,7 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { StatusType } from '@/graphql/types';
 import { useFilesDragAndDrop } from '@/hooks/use-files-drag-and-drop';
+import { useT } from '@/lib/i18n';
 import { copyToClipboard } from '@/lib/report';
 import { useFlow } from '@/providers/flow-provider';
 
@@ -38,6 +39,7 @@ import { useFlowFilesSearch } from './use-flow-files-search';
 import { useFlowFilesUpload } from './use-flow-files-upload';
 
 function FlowFiles() {
+    const t = useT();
     const { flowId, flowStatus } = useFlow();
     const [isPullDialogOpen, setIsPullDialogOpen] = useState(false);
     const [isAttachResourcesDialogOpen, setIsAttachResourcesDialogOpen] = useState(false);
@@ -66,13 +68,13 @@ function FlowFiles() {
         const wasCopied = await copyToClipboard(file.path);
 
         if (wasCopied) {
-            toast.success('Path copied to clipboard');
+            toast.success(t('flowDetail.pathCopied'));
 
             return;
         }
 
-        toast.error('Failed to copy path');
-    }, []);
+        toast.error(t('flowDetail.pathCopyFailed'));
+    }, [t]);
 
     /**
      * Bulk "copy paths" handler: join every selected file's path with `\n` so the
@@ -92,8 +94,8 @@ function FlowFiles() {
             return;
         }
 
-        toast.error('Failed to copy paths');
-    }, []);
+        toast.error(t('flowDetail.pathsCopyFailed'));
+    }, [t]);
 
     // Single-file row download specialises the bulk URL builder via a 1-element
     // array. `flowId` may be missing (no flow selected yet) — return '' so
@@ -119,10 +121,10 @@ function FlowFiles() {
             appliesToDirs: true,
             icon: FolderOutput,
             id: 'flow-files-save-as-resource',
-            label: 'Save as resource',
+            label: t('flowDetail.saveAsResource'),
             onSelect: handleRequestPromote,
         }),
-        [handleRequestPromote],
+        [handleRequestPromote, t],
     );
 
     const fileManagerActions = useMemo<FileManagerAction[]>(
@@ -169,7 +171,7 @@ function FlowFiles() {
                 <EmptyMedia variant="icon">
                     <FolderUp />
                 </EmptyMedia>
-                <EmptyTitle>No files in cache</EmptyTitle>
+                <EmptyTitle>{t('flowDetail.noFilesInCache')}</EmptyTitle>
                 <EmptyDescription>
                     Upload files to make them available at <code>/work/uploads</code>, or use Pull to sync files from
                     the running container. You can also drag &amp; drop files here.
@@ -184,9 +186,10 @@ function FlowFiles() {
                 <EmptyMedia variant="icon">
                     <Search />
                 </EmptyMedia>
-                <EmptyTitle>No matches</EmptyTitle>
+                <EmptyTitle>{t('flowDetail.noMatches')}</EmptyTitle>
                 <EmptyDescription>
-                    No files match <code>{search.debouncedQuery.trim()}</code>. Try a different query.
+                    {t('flowDetail.noFilesMatch')} <code>{search.debouncedQuery.trim()}</code>
+                    {t('flowDetail.tryDifferentQuery')}
                 </EmptyDescription>
             </EmptyHeader>
         </Empty>
@@ -212,7 +215,7 @@ function FlowFiles() {
                 <div className="bg-primary/10 border-primary pointer-events-none absolute inset-0 z-30 flex items-center justify-center rounded-lg border-2 border-dashed">
                     <div className="text-primary flex flex-col items-center gap-2">
                         <FolderUp className="size-8" />
-                        <span className="text-sm font-medium">Drop files to upload</span>
+                        <span className="text-sm font-medium">{t('flowDetail.dropFilesToUpload')}</span>
                     </div>
                 </div>
             )}
@@ -233,7 +236,7 @@ function FlowFiles() {
                                             <InputGroupInput
                                                 {...field}
                                                 autoComplete="off"
-                                                placeholder="Search files..."
+                                                placeholder={t('flowDetail.searchFiles')}
                                                 type="text"
                                             />
                                             {field.value && (
@@ -267,7 +270,7 @@ function FlowFiles() {
                                 </span>
                             </TooltipTrigger>
                             <TooltipContent className="max-w-64 text-center text-xs">
-                                <p className="font-medium">Upload files</p>
+                                <p className="font-medium">{t('flowDetail.uploadFiles')}</p>
                                 <p className="mt-1">
                                     Pushed to <code>/work/uploads</code> — immediately accessible inside the container.
                                 </p>
@@ -289,7 +292,7 @@ function FlowFiles() {
                                 </span>
                             </TooltipTrigger>
                             <TooltipContent className="max-w-64 text-center text-xs">
-                                <p className="font-medium">Attach resources</p>
+                                <p className="font-medium">{t('flowDetail.attachResources')}</p>
                                 <p className="mt-1">
                                     Copied from the library to <code>/work/resources</code> — immediately accessible
                                     inside the container.
@@ -314,13 +317,13 @@ function FlowFiles() {
                             <TooltipContent className="max-w-64 text-center text-xs">
                                 {isContainerRunning ? (
                                     <>
-                                        <p className="font-medium">Pull file or directory from container</p>
+                                        <p className="font-medium">{t('flowDetail.pullFromContainer')}</p>
                                         <p className="mt-1">
                                             Snapshots are stored separately under <strong>Container</strong>.
                                         </p>
                                     </>
                                 ) : (
-                                    <p className="font-medium">Container is not running</p>
+                                    <p className="font-medium">{t('flowDetail.containerNotRunning')}</p>
                                 )}
                             </TooltipContent>
                         </Tooltip>
@@ -360,13 +363,13 @@ function FlowFiles() {
             />
 
             <ConfirmationDialog
-                confirmText="Delete"
+                confirmText={t('flowDetail.delete')}
                 handleConfirm={deletion.confirmDelete}
                 handleOpenChange={handleDeleteDialogOpenChange}
                 isOpen={!!deletion.fileToDelete}
                 itemName={deletion.fileToDelete?.name}
-                itemType={deletion.fileToDelete?.isDir ? 'directory' : 'file'}
-                title={deletion.fileToDelete?.isDir ? 'Delete Directory' : 'Delete File'}
+                itemType={deletion.fileToDelete?.isDir ? t('flowDetail.itemTypeDir') : t('flowDetail.itemTypeFile')}
+                title={deletion.fileToDelete?.isDir ? t('flowDetail.deleteDirectory') : t('flowDetail.deleteFile')}
             />
         </div>
     );

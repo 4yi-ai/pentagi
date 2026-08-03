@@ -15,10 +15,12 @@ import {
 } from '@/features/knowledges/knowledge-form';
 import { KnowledgeLayout } from '@/features/knowledges/knowledge-layout';
 import { useKnowledgeDocumentQuery } from '@/graphql/types';
+import { useT } from '@/lib/i18n';
 import { useKnowledges } from '@/providers/knowledges-provider';
 
 function Knowledge() {
     const navigate = useNavigate();
+    const t = useT();
     const { knowledgeId } = useParams<{ knowledgeId?: string }>();
     const { createKnowledge, updateKnowledge } = useKnowledges();
 
@@ -34,10 +36,10 @@ function Knowledge() {
 
     useEffect(() => {
         if (!isNew && !isLoadingKnowledge && !knowledge) {
-            toast.error('Knowledge document not found');
+            toast.error(t('kb.notFound'));
             navigate('/knowledges', { replace: true });
         }
-    }, [isNew, isLoadingKnowledge, knowledge, navigate]);
+    }, [isNew, isLoadingKnowledge, knowledge, navigate, t]);
 
     const initialValues = useMemo<FormValues>(
         () => (knowledge ? documentToFormValues(knowledge) : newDocumentDefaults),

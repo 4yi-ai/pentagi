@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { FormSubmitButton } from '@/components/ui/form-submit-button';
 import { Input } from '@/components/ui/input';
+import { useT } from '@/lib/i18n';
 
 import { resourcesMkdirFormSchema, type ResourcesMkdirFormValues, useResourcesMkdir } from './use-resources-mkdir';
 
@@ -49,6 +50,7 @@ export function ResourcesMkdirDialog({ defaultParentPath = '', isOpen, onClose }
 }
 
 function ResourcesMkdirDialogForm({ defaultParentPath, onClose }: ResourcesMkdirDialogFormProps) {
+    const t = useT();
     const { isCreating, mkdir } = useResourcesMkdir();
 
     const form = useForm<ResourcesMkdirFormValues>({
@@ -74,12 +76,9 @@ function ResourcesMkdirDialogForm({ defaultParentPath, onClose }: ResourcesMkdir
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                     <FolderPlus className="size-4" />
-                    Create directory
+                    {t('res.mkdirTitle')}
                 </DialogTitle>
-                <DialogDescription>
-                    Create a virtual directory inside your resource library. Existing parent directories are reused
-                    automatically.
-                </DialogDescription>
+                <DialogDescription>{t('res.mkdirDesc')}</DialogDescription>
             </DialogHeader>
 
             <Form {...form}>
@@ -92,7 +91,7 @@ function ResourcesMkdirDialogForm({ defaultParentPath, onClose }: ResourcesMkdir
                         name="path"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Path</FormLabel>
+                                <FormLabel>{t('res.pathLabel')}</FormLabel>
                                 <FormControl>
                                     <Input
                                         {...field}
@@ -103,7 +102,9 @@ function ResourcesMkdirDialogForm({ defaultParentPath, onClose }: ResourcesMkdir
                                     />
                                 </FormControl>
                                 <FormDescription>
-                                    Relative path. Use <code>/</code> to nest into subdirectories.
+                                    {t('res.mkdirPathHelpPre')}
+                                    <code>/</code>
+                                    {t('res.mkdirPathHelpPost')}
                                 </FormDescription>
                                 <FormMessage />
                             </FormItem>
@@ -117,9 +118,9 @@ function ResourcesMkdirDialogForm({ defaultParentPath, onClose }: ResourcesMkdir
                             type="button"
                             variant="outline"
                         >
-                            Cancel
+                            {t('res.cancel')}
                         </Button>
-                        <FormSubmitButton icon={<FolderPlus />}>Create</FormSubmitButton>
+                        <FormSubmitButton icon={<FolderPlus />}>{t('res.create')}</FormSubmitButton>
                     </div>
                 </form>
             </Form>

@@ -49,6 +49,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useTemplateDetailNavigation } from '@/features/templates/use-template-detail-navigation';
 import { useFlowTemplateQuery } from '@/graphql/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { type Template, useTemplates } from '@/providers/templates-provider';
 
@@ -242,6 +243,7 @@ const renderTemplateItem = (item: Template, isCurrent: boolean): ReactNode => (
 
 function Template() {
     const navigate = useNavigate();
+    const t = useT();
     const { templateId } = useParams<{ templateId?: string }>();
     const { createTemplate, deleteTemplate, updateTemplate } = useTemplates();
 
@@ -315,7 +317,7 @@ function Template() {
             // Preserve the original `text` from the server so that an inline
             // rename never overwrites unsaved edits in the form below.
             await updateTemplate(templateId, { text: template.text, title: newTitle });
-            toast.success('Template renamed successfully');
+            toast.success(t('tpl.renamedSuccess'));
             handleTemplateRenameCancel();
         } catch {
             // Error already handled in provider with toast
@@ -420,7 +422,7 @@ function Template() {
                                         inputRef={editingInputRef}
                                         onCancel={handleTemplateRenameCancel}
                                         onSave={handleTemplateRenameSave}
-                                        placeholder="Template title"
+                                        placeholder={t('tpl.templateTitle')}
                                     />
                                 ) : canShowActions ? (
                                     <Tooltip>
@@ -429,14 +431,14 @@ function Template() {
                                                 className="max-w-64 min-w-0 cursor-text truncate select-none"
                                                 onDoubleClick={handleTemplateRenameStart}
                                             >
-                                                {templateName ?? 'Template'}
+                                                {templateName ?? t('tpl.template')}
                                             </BreadcrumbPage>
                                         </TooltipTrigger>
-                                        <TooltipContent>Double-click to rename</TooltipContent>
+                                        <TooltipContent>{t('tpl.doubleClickRename')}</TooltipContent>
                                     </Tooltip>
                                 ) : (
                                     <BreadcrumbPage className="min-w-0 truncate">
-                                        {isNew ? 'New template' : (templateName ?? 'Template')}
+                                        {isNew ? t('tpl.newTemplate') : (templateName ?? t('tpl.template'))}
                                     </BreadcrumbPage>
                                 )}
                             </BreadcrumbItem>
@@ -449,7 +451,7 @@ function Template() {
                             controller={templateNav}
                             renderItem={renderTemplateItem}
                             sheetIcon={<FileText className="size-4" />}
-                            sheetTitle="Templates"
+                            sheetTitle={t('tpl.templates')}
                         />
                     )}
                     <Button
@@ -463,7 +465,7 @@ function Template() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
-                                    aria-label="Template actions"
+                                    aria-label={t('tpl.templateActions')}
                                     className="size-8 p-0"
                                     variant="ghost"
                                 >
@@ -482,11 +484,11 @@ function Template() {
                                             onSelect={(event) => event.preventDefault()}
                                         >
                                             <FileText className="size-4" />
-                                            Templates
+                                            {t('tpl.templates')}
                                             <div className="-my-1.5 -mr-2 ml-auto flex items-center">
                                                 <DetailNavigationButtons<Template>
                                                     controller={templateNav}
-                                                    sheetTitle="Templates"
+                                                    sheetTitle={t('tpl.templates')}
                                                     size="sm"
                                                 />
                                             </div>
@@ -496,7 +498,7 @@ function Template() {
                                 )}
                                 <DropdownMenuItem onClick={handleTemplateRenameStart}>
                                     <Pencil className="size-3" />
-                                    Rename
+                                    {t('tpl.rename')}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -506,12 +508,12 @@ function Template() {
                                     {isDeleting ? (
                                         <>
                                             <Loader2 className="size-4 animate-spin" />
-                                            Deleting...
+                                            {t('tpl.deleting')}
                                         </>
                                     ) : (
                                         <>
                                             <Trash className="size-4" />
-                                            Delete
+                                            {t('tpl.delete')}
                                         </>
                                     )}
                                 </DropdownMenuItem>
@@ -525,7 +527,7 @@ function Template() {
                     controller={templateNav}
                     renderItem={renderTemplateItem}
                     sheetIcon={<FileText className="size-4" />}
-                    sheetTitle="Templates"
+                    sheetTitle={t('tpl.templates')}
                 />
             )}
         </>
@@ -605,7 +607,7 @@ function Template() {
                         <SheetHeader className="border-b p-4">
                             <SheetTitle className="flex items-center gap-2 pr-8 text-base">
                                 <FileText className="size-4" />
-                                <span>Preset templates</span>
+                                <span>{t('tpl.presetTemplates')}</span>
                                 <Badge
                                     className="ml-auto font-normal tabular-nums"
                                     variant="secondary"
@@ -635,7 +637,7 @@ function Template() {
                             <div className="border-b p-4">
                                 <h3 className="flex items-center gap-2 text-base font-semibold">
                                     <FileText className="size-4" />
-                                    <span>Preset templates</span>
+                                    <span>{t('tpl.presetTemplates')}</span>
                                     <Badge
                                         className="ml-auto font-normal tabular-nums"
                                         variant="secondary"
@@ -670,9 +672,9 @@ function Template() {
                 <div className="flex min-h-[calc(100dvh-3rem)] items-center justify-center p-4">
                     <Card className="w-full max-w-2xl">
                         <CardContent className="flex flex-col items-center gap-4 pt-6 text-center">
-                            <h2 className="text-xl font-semibold">Template not found</h2>
-                            <p className="text-muted-foreground">The template you are looking for does not exist.</p>
-                            <Button onClick={() => navigate('/templates')}>Back to Templates</Button>
+                            <h2 className="text-xl font-semibold">{t('tpl.notFoundTitle')}</h2>
+                            <p className="text-muted-foreground">{t('tpl.notFoundDesc')}</p>
+                            <Button onClick={() => navigate('/templates')}>{t('tpl.backToTemplates')}</Button>
                         </CardContent>
                     </Card>
                 </div>
@@ -689,16 +691,16 @@ function Template() {
                         <CardContent className="flex flex-col gap-4 pt-6">
                             <div className="text-center">
                                 <h1 className="text-2xl font-semibold">
-                                    {isNew ? 'Create a new template' : 'Edit template'}
+                                    {isNew ? t('tpl.createNew') : t('tpl.editTemplate')}
                                 </h1>
                                 <p className="text-muted-foreground mt-2">
-                                    Add title and content for your template or use a
+                                    {t('tpl.addTitleContent')}
                                     <Button
                                         className="h-auto px-1.5 py-0 text-base"
                                         onClick={() => setIsAsideOpen((open) => !open)}
                                         variant="link"
                                     >
-                                        Preset template
+                                        {t('tpl.presetTemplate')}
                                     </Button>
                                 </p>
                             </div>
@@ -716,7 +718,7 @@ function Template() {
                                                     <Input
                                                         autoFocus={isNew}
                                                         disabled={isSaving}
-                                                        placeholder="Title"
+                                                        placeholder={t('tpl.title')}
                                                         {...field}
                                                     />
                                                 </FormControl>
@@ -737,11 +739,11 @@ function Template() {
                                                             maxRows={9}
                                                             minRows={1}
                                                             onKeyDown={handleKeyDown}
-                                                            placeholder="Content"
+                                                            placeholder={t('tpl.content')}
                                                         />
                                                         <InputGroupAddon align="block-end">
                                                             <InputGroupButton
-                                                                aria-label={isNew ? 'Create template' : 'Save template'}
+                                                                aria-label={isNew ? t('tpl.createTemplate') : t('tpl.saveTemplate')}
                                                                 className="ml-auto"
                                                                 disabled={
                                                                     isSaving ||
@@ -749,7 +751,7 @@ function Template() {
                                                                     (!isNew && !hasUnsavedChanges)
                                                                 }
                                                                 size="icon-xs"
-                                                                title={isNew ? 'Create template' : 'Save template'}
+                                                                title={isNew ? t('tpl.createTemplate') : t('tpl.saveTemplate')}
                                                                 type="submit"
                                                                 variant="default"
                                                             >
@@ -774,9 +776,9 @@ function Template() {
             </div>
             <ConfirmationDialog
                 confirmIcon={<FileSymlink />}
-                confirmText="Replace"
+                confirmText={t('tpl.replace')}
                 confirmVariant="default"
-                description="Current form has content. Replace with the selected preset?"
+                description={t('tpl.replaceDesc')}
                 handleConfirm={handleConfirmReplacePreset}
                 handleOpenChange={(open) => {
                     if (!open) {
@@ -786,16 +788,16 @@ function Template() {
                     setIsReplaceConfirmOpen(open);
                 }}
                 isOpen={isReplaceConfirmOpen}
-                title="Replace content?"
+                title={t('tpl.replaceTitle')}
             />
             <ConfirmationDialog
-                cancelText="Cancel"
-                confirmText="Delete"
+                cancelText={t('tpl.cancel')}
+                confirmText={t('tpl.delete')}
                 handleConfirm={handleTemplateDelete}
                 handleOpenChange={setIsDeleteDialogOpen}
                 isOpen={isDeleteDialogOpen}
                 itemName={templateName ?? undefined}
-                itemType="template"
+                itemType={t('tpl.itemType')}
             />
         </>
     );

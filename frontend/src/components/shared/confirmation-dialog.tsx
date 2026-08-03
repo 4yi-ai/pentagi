@@ -12,6 +12,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 type ConfirmationDialogIconProps = ReactElement<React.SVGProps<SVGSVGElement>>;
@@ -35,31 +36,42 @@ interface ConfirmationDialogProps {
 
 function ConfirmationDialog({
     cancelIcon,
-    cancelText = 'Cancel',
+    cancelText,
     cancelVariant = 'outline',
     confirmIcon = <Trash2 />,
-    confirmText = 'Confirm',
+    confirmText,
     confirmVariant = 'destructive',
     description,
     handleConfirm,
     handleOpenChange,
     isOpen,
-    itemName = 'this',
-    itemType = 'item',
+    itemName,
+    itemType,
     title,
 }: ConfirmationDialogProps) {
+    const t = useT();
     const [isProcessing, setIsProcessing] = useState(false);
+
+    const cancelLabel = cancelText ?? t('cancel');
+    const confirmLabel = confirmText ?? t('confirmConfirm');
+    const resolvedItemName = itemName ?? t('confirmItemNameDefault');
+    const resolvedItemType = itemType ?? t('confirmItemTypeDefault');
 
     // Derive a contextual title from confirm verb + item type so callers don't
     // see "Confirm Action" for a Delete prompt or a Save prompt. Explicit
     // `title` always wins.
-    const verb = confirmText.trim();
-    const resolvedTitle = title ?? (verb && verb !== 'Confirm' ? `${verb} ${itemType}` : 'Confirm Action');
+    const verb = confirmText?.trim() ?? '';
+    const resolvedTitle =
+        title ??
+        (verb
+            ? t('confirmTitleAction').replace('{verb}', verb).replace('{itemType}', resolvedItemType)
+            : t('confirmActionDefault'));
 
     const defaultDescription = description || (
         <>
-            Are you sure you want to {verb.toLowerCase() || 'perform this action on'}{' '}
-            <strong className="text-foreground font-semibold">{itemName}</strong> {itemType}?
+            {t('confirmDescPrefix').replace('{verb}', verb.toLowerCase() || t('confirmDescFallbackVerb'))}{' '}
+            <strong className="text-foreground font-semibold">{resolvedItemName}</strong> {resolvedItemType}
+            {t('confirmDescSuffix')}
         </>
     );
 
@@ -119,7 +131,7 @@ function ConfirmationDialog({
                         variant={cancelVariant}
                     >
                         {processIcon(cancelIcon)}
-                        {cancelText}
+                        {cancelLabel}
                     </Button>
                     <Button
                         disabled={isProcessing}
@@ -129,7 +141,7 @@ function ConfirmationDialog({
                         variant={confirmVariant}
                     >
                         {isProcessing ? <Loader2 className="size-4 animate-spin" /> : processIcon(confirmIcon)}
-                        {confirmText}
+                        {confirmLabel}
                     </Button>
                 </DialogFooter>
             </DialogContent>

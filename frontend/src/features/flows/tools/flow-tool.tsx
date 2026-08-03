@@ -7,6 +7,7 @@ import Markdown from '@/components/shared/markdown';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import FlowAgentIcon from '@/features/flows/agents/flow-agent-icon';
 import { copyMessageToClipboard } from '@/lib/clipboard';
+import { useT } from '@/lib/i18n';
 import { formatDate, formatName } from '@/lib/utils/format';
 
 interface FlowToolProps {
@@ -23,6 +24,7 @@ const containsSearchValue = (text: null | string | undefined, searchValue: strin
 };
 
 function FlowTool({ log, searchValue = '' }: FlowToolProps) {
+    const t = useT();
     const { createdAt, engine, executor, initiator, query, result, subtaskId, taskId } = log;
 
     const searchChecks = useMemo(() => {
@@ -76,7 +78,7 @@ function FlowTool({ log, searchValue = '' }: FlowToolProps) {
                                     <span>{formatName(engine)}</span>
                                 </span>
                             </TooltipTrigger>
-                            <TooltipContent>Tool name</TooltipContent>
+                            <TooltipContent>{t('flowDetail.toolName')}</TooltipContent>
                         </Tooltip>
                     </div>
 
@@ -93,7 +95,7 @@ function FlowTool({ log, searchValue = '' }: FlowToolProps) {
                             className="cursor-pointer"
                             onClick={() => setIsDetailsVisible(!isDetailsVisible)}
                         >
-                            {isDetailsVisible ? 'Hide details' : 'Show details'}
+                            {isDetailsVisible ? t('flowDetail.hideDetails') : t('flowDetail.showDetails')}
                         </div>
                         {isDetailsVisible && (
                             <>
@@ -128,19 +130,19 @@ function FlowTool({ log, searchValue = '' }: FlowToolProps) {
                             onClick={handleCopy}
                         />
                     </TooltipTrigger>
-                    <TooltipContent>Copy</TooltipContent>
+                    <TooltipContent>{t('flowDetail.copy')}</TooltipContent>
                 </Tooltip>
                 <span className="text-muted-foreground/50">{formatDate(new Date(createdAt))}</span>
                 {taskId && (
                     <>
                         <span className="text-muted-foreground/50">|</span>
-                        <span className="text-muted-foreground/50">Task ID: {taskId}</span>
+                        <span className="text-muted-foreground/50">{t('flowDetail.taskId')}: {taskId}</span>
                     </>
                 )}
                 {subtaskId && (
                     <>
                         <span className="text-muted-foreground/50">|</span>
-                        <span className="text-muted-foreground/50">Subtask ID: {subtaskId}</span>
+                        <span className="text-muted-foreground/50">{t('flowDetail.subtaskId')}: {subtaskId}</span>
                     </>
                 )}
             </div>

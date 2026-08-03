@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useT } from '@/lib/i18n';
 import { useResources } from '@/providers/resources-provider';
 
 import { stripFlowRootPrefix } from './flow-files-utils';
@@ -135,6 +136,7 @@ export function FlowFilesPromoteDialog({ files, flowId, onClose }: FlowFilesProm
 }
 
 function FlowFilesPromoteDialogForm({ files, flowId, onClose }: FlowFilesPromoteDialogFormProps) {
+    const t = useT();
     const { isPromoting, promote } = useFlowFilesPromote({ flowId });
     const { resources } = useResources();
     const isMulti = files.length > 1;
@@ -184,8 +186,12 @@ function FlowFilesPromoteDialogForm({ files, flowId, onClose }: FlowFilesPromote
     });
 
     const isSubmitDisabled = !form.formState.isValid;
-    const titleText = isMulti ? `Save ${files.length} items as resources` : 'Save as resource';
-    const overwriteCtaLabel = isMulti ? `Save ${files.length} with overwrite` : 'Save with overwrite';
+    const titleText = isMulti
+        ? t('flowDetail.saveNItemsAsResources').replace('{count}', String(files.length))
+        : t('flowDetail.saveAsResource');
+    const overwriteCtaLabel = isMulti
+        ? t('flowDetail.saveNWithOverwrite').replace('{count}', String(files.length))
+        : t('flowDetail.saveWithOverwrite');
 
     return (
         <>
@@ -220,7 +226,9 @@ function FlowFilesPromoteDialogForm({ files, flowId, onClose }: FlowFilesPromote
                             name="destination"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>{isMulti ? 'Destination directory' : 'Destination path'}</FormLabel>
+                                    <FormLabel>
+                                        {isMulti ? t('flowDetail.destinationDir') : t('flowDetail.destinationPath')}
+                                    </FormLabel>
                                     <FormControl>
                                         <Input
                                             {...field}
@@ -228,9 +236,7 @@ function FlowFilesPromoteDialogForm({ files, flowId, onClose }: FlowFilesPromote
                                             autoFocus
                                             disabled={isPromoting}
                                             placeholder={
-                                                isMulti
-                                                    ? 'Leave empty to save into the library root'
-                                                    : 'results/scan.txt'
+                                                isMulti ? t('flowDetail.saveIntoRootPlaceholder') : 'results/scan.txt'
                                             }
                                         />
                                     </FormControl>
@@ -259,7 +265,7 @@ function FlowFilesPromoteDialogForm({ files, flowId, onClose }: FlowFilesPromote
                                 type="button"
                                 variant="outline"
                             >
-                                Cancel
+                                {t('cancel')}
                             </Button>
                             <OverwriteButtons
                                 isDisabled={isSubmitDisabled}
@@ -269,7 +275,7 @@ function FlowFilesPromoteDialogForm({ files, flowId, onClose }: FlowFilesPromote
                                 }}
                                 overwriteLabel={overwriteCtaLabel}
                                 primaryIcon={BookmarkPlus}
-                                primaryLabel="Save"
+                                primaryLabel={t('save')}
                                 primaryType="submit"
                             />
                         </div>
