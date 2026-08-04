@@ -93,7 +93,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 if (cancelled) return;
 
                 const status = getApiErrorStatusCode(err);
-                const transportDown = status === undefined || status >= 500;
+                // undefined = network error; >=500 = gateway/router down; 404 = pod
+                // mid-cold-start before its routes are mounted. All mean "not ready
+                // yet" on this deployment, so keep polling behind the startup screen.
+                const transportDown = status === undefined || status >= 500 || status === 404;
 
                 if (transportDown) {
                     // Backend down/resuming — do not fall through to /login; keep polling.

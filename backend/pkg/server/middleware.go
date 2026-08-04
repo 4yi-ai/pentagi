@@ -64,13 +64,41 @@ func autoLoginMiddleware(db *gorm.DB, cfg *config.Config, sessionTimeout int) gi
 
 		var user models.User
 		if err := db.Take(&user, "mail = ?", cfg.AuthAutoLoginEmail).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				logger.FromContext(c).Errorf("auto-login: default admin user not found for '%s'", cfg.AuthAutoLoginEmail)
-			} else {
+			if !gorm.IsRecordNotFoundError(err) {
 				logger.FromContext(c).WithError(err).Error("auto-login: failed to load default admin user")
+				c.Next()
+				return
 			}
-			c.Next()
-			return
+
+			// Seamless no-login deployment but the admin user isn't present yet: a
+			// fresh database whose seed migration hasn't inserted it, or a custom
+			// AUTH_AUTO_LOGIN_EMAIL that no seed row matches. Create an admin on
+			// demand so the login page never blocks the user. This is idempotent
+			// with the seed migration (mail is unique) and safe on every request
+			// (only runs while no matching user exists).
+			roleID := uint64(1) // 'Admin' role from the initial seed migration
+			var adminRole models.Role
+			if rerr := db.Table("roles").Where("name = ?", "Admin").Take(&adminRole).Error; rerr == nil && adminRole.ID != 0 {
+				roleID = adminRole.ID
+			}
+			newUser := models.User{
+				Mail:   cfg.AuthAutoLoginEmail,
+				Name:   "admin",
+				Type:   models.UserTypeLocal,
+				Status: models.UserStatusActive,
+				RoleID: roleID,
+			}
+			if cerr := db.Create(&newUser).Error; cerr != nil {
+				logger.FromContext(c).WithError(cerr).Errorf("auto-login: failed to create default admin user '%s'", cfg.AuthAutoLoginEmail)
+				c.Next()
+				return
+			}
+			if lerr := db.Take(&user, "mail = ?", cfg.AuthAutoLoginEmail).Error; lerr != nil {
+				logger.FromContext(c).WithError(lerr).Error("auto-login: failed to reload created admin user")
+				c.Next()
+				return
+			}
+			logger.FromContext(c).Infof("auto-login: created default admin user '%s' (role %d)", cfg.AuthAutoLoginEmail, roleID)
 		}
 
 		if user.Status != models.UserStatusActive {
