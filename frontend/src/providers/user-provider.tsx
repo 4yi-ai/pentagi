@@ -65,6 +65,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
                 if (cancelled) return;
 
+                // Seamless no-login (AUTH_AUTO_LOGIN) deployment still cold-starting:
+                // the server answers but returns a guest because the admin session
+                // isn't populated yet (fresh-DB migrations seed the admin a beat after
+                // the HTTP server accepts traffic). Keep polling and show the "starting
+                // up" screen — it flips to the admin user once startup completes, so we
+                // never bounce the user to a login page they have no credentials for.
+                if (info?.status === 'success' && info.data?.type === 'guest' && info.data.auto_login) {
+                    setBackendUnreachable(true);
+                    setIsLoading(false);
+                    retryTimer = setTimeout(attemptInfo, 3000);
+
+                    return;
+                }
+
                 if (info?.status === 'success' && info.data) {
                     setAuthInfo(info.data);
 

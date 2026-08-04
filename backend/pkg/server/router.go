@@ -175,6 +175,7 @@ func NewRouter(
 			BaseURL:          baseURL,
 			LoginCallbackURL: oauthLoginCallbackURL,
 			SessionTimeout:   sessionTimeoutSeconds,
+			AuthAutoLogin:    cfg.AuthAutoLogin,
 		},
 		orm,
 		oauthClients,

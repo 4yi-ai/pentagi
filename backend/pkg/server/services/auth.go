@@ -42,6 +42,11 @@ type AuthServiceConfig struct {
 	BaseURL          string
 	LoginCallbackURL string
 	SessionTimeout   int // in seconds
+	// AuthAutoLogin mirrors config.AuthAutoLogin. When true, the deployment runs
+	// seamless no-login (an admin session is populated transparently), so /info
+	// advertises it and the frontend never shows the login page — during the cold
+	// start window it waits for the auto-login session instead.
+	AuthAutoLogin bool
 }
 
 type AuthService struct {
@@ -766,6 +771,7 @@ func randBytes(nByte int) ([]byte, error) {
 
 type info struct {
 	Type      string      `json:"type"`
+	AutoLogin bool        `json:"auto_login"`
 	Develop   bool        `json:"develop"`
 	User      models.User `json:"user"`
 	Role      models.Role `json:"role"`
@@ -801,6 +807,7 @@ func (s *AuthService) Info(c *gin.Context) {
 	privs := c.GetStringSlice("prm")
 
 	resp.Privs = privs
+	resp.AutoLogin = s.cfg.AuthAutoLogin
 	resp.IssuedAt = time.Unix(gtm, 0).UTC()
 	resp.ExpiresAt = time.Unix(exp, 0).UTC()
 	resp.Develop = version.IsDevelopMode()
