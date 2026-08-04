@@ -55,9 +55,14 @@ func autoLoginMiddleware(db *gorm.DB, cfg *config.Config, sessionTimeout int) gi
 
 		session := sessions.Default(c)
 
-		// If a session already carries a user id, leave it untouched and let the
-		// downstream auth middleware validate/expire it as usual.
-		if session.Get("uid") != nil {
+		// Re-authenticate unless a still-VALID session already exists. Skipping on
+		// mere uid presence is wrong for a no-login deployment: a stale/expired
+		// session cookie (uid set but past its exp — e.g. a cookie left in the
+		// browser from a previous install) would be left in place, the downstream
+		// auth check would treat it as guest, and the login page would appear. So
+		// only skip when the session is present AND unexpired; otherwise fall
+		// through and mint a fresh admin session.
+		if session.Get("uid") != nil && sessionUnexpired(session) {
 			c.Next()
 			return
 		}
@@ -160,6 +165,30 @@ func autoLoginMiddleware(db *gorm.DB, cfg *config.Config, sessionTimeout int) gi
 		c.Set("autoLoginStatus", "ok")
 		c.Next()
 	}
+}
+
+// sessionUnexpired reports whether the session carries an "exp" (unix seconds)
+// that is still in the future. Used by autoLoginMiddleware to tell a live
+// session from a stale cookie left over from a previous deployment/install.
+func sessionUnexpired(session sessions.Session) bool {
+	exp := session.Get("exp")
+	if exp == nil {
+		return false
+	}
+
+	var expUnix int64
+	switch v := exp.(type) {
+	case int64:
+		expUnix = v
+	case int:
+		expUnix = int64(v)
+	case float64:
+		expUnix = int64(v)
+	default:
+		return false
+	}
+
+	return expUnix > time.Now().Unix()
 }
 
 func noCacheMiddleware() gin.HandlerFunc {
