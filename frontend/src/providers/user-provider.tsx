@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import type { AuthInfo } from '@/models/info';
 
-import { api } from '@/lib/axios';
+import { api, getApiErrorStatusCode } from '@/lib/axios';
 import { getReturnUrlParam } from '@/lib/utils/auth';
 import { baseUrl } from '@/models/api';
 
@@ -25,6 +25,10 @@ export type OAuthProvider = 'github' | 'google';
 
 interface UserContextType {
     authInfo: AuthInfo | null;
+    // True while the backend is unreachable (pod resuming/starting, 5xx from the
+    // gateway, or a network error). The app shows a "starting up" screen and
+    // keeps polling /info instead of falling through to the login page.
+    backendUnreachable: boolean;
     clearAuth: () => void;
     isAuthenticated: () => boolean;
     isLoading: boolean;
@@ -44,11 +48,54 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const location = useLocation();
     const [authInfo, setAuthInfo] = useState<AuthInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [backendUnreachable, setBackendUnreachable] = useState(false);
 
     useEffect(() => {
-        const initializeAuth = async () => {
-            let shouldFetchFromApi = false;
+        let retryTimer: ReturnType<typeof setTimeout> | undefined;
+        let cancelled = false;
 
+        // Fetch /info, retrying while the backend is unreachable. This deployment
+        // runs behind an SSO gateway with seamless no-login (AUTH_AUTO_LOGIN), so a
+        // failing /info almost always means the pod is resuming/starting — showing
+        // the login page there is wrong (there are no credentials). We keep polling
+        // and surface a "starting up" screen until the server answers.
+        const attemptInfo = async () => {
+            try {
+                const info = await api.get<AuthInfo>('/info');
+
+                if (cancelled) return;
+
+                if (info?.status === 'success' && info.data) {
+                    setAuthInfo(info.data);
+
+                    if (info.data.type === 'guest') {
+                        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(info.data));
+                    }
+                }
+
+                setBackendUnreachable(false);
+                setIsLoading(false);
+            } catch (err) {
+                if (cancelled) return;
+
+                const status = getApiErrorStatusCode(err);
+                const transportDown = status === undefined || status >= 500;
+
+                if (transportDown) {
+                    // Backend down/resuming — do not fall through to /login; keep polling.
+                    setBackendUnreachable(true);
+                    setIsLoading(false);
+                    retryTimer = setTimeout(attemptInfo, 3000);
+                } else {
+                    // A definitive response (e.g. 200 unauthenticated). Let the normal
+                    // guard decide (login page for non-auto-login deployments).
+                    setBackendUnreachable(false);
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        const initializeAuth = async () => {
             try {
                 const storedData = localStorage.getItem(AUTH_STORAGE_KEY);
 
@@ -58,43 +105,31 @@ export function UserProvider({ children }: { children: ReactNode }) {
                     if (parsedAuthInfo) {
                         setAuthInfo(parsedAuthInfo);
 
-                        // Guests need a fresh /info to pick up updated OAuth providers list.
-                        if (parsedAuthInfo.type === 'guest') {
-                            shouldFetchFromApi = true;
-                        } else {
+                        // Non-guests are trusted from cache; guests still refresh /info
+                        // to pick up the updated OAuth providers list.
+                        if (parsedAuthInfo.type !== 'guest') {
                             setIsLoading(false);
 
                             return;
                         }
                     }
-                } else {
-                    shouldFetchFromApi = true;
                 }
             } catch {
                 localStorage.removeItem(AUTH_STORAGE_KEY);
-                shouldFetchFromApi = true;
             }
 
-            if (shouldFetchFromApi) {
-                try {
-                    const info = await api.get<AuthInfo>('/info');
-
-                    if (info?.status === 'success' && info.data) {
-                        setAuthInfo(info.data);
-
-                        if (info.data.type === 'guest') {
-                            localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(info.data));
-                        }
-                    }
-                } catch {
-                    // swallow: /info is non-critical here, the rest of the app will retry on demand
-                } finally {
-                    setIsLoading(false);
-                }
-            }
+            await attemptInfo();
         };
 
         initializeAuth();
+
+        return () => {
+            cancelled = true;
+
+            if (retryTimer) {
+                clearTimeout(retryTimer);
+            }
+        };
     }, []);
 
     const setAuth = useCallback((newAuthInfo: AuthInfo) => {
@@ -332,6 +367,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 });
 
                 if (info?.status === 'success' && info.data) {
+                    setBackendUnreachable(false);
                     setAuth(info.data);
                 } else {
                     clearAuth();
@@ -339,7 +375,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
                     const returnParam = getReturnUrlParam(location.pathname);
                     navigate(`/login${returnParam}`);
                 }
-            } catch {
+            } catch (err) {
+                const status = getApiErrorStatusCode(err);
+
+                // Backend momentarily unreachable (pod resuming, 5xx, network): keep
+                // the existing session and let the app recover — do not force logout.
+                if (status === undefined || status >= 500) {
+                    setBackendUnreachable(true);
+
+                    return;
+                }
+
                 clearAuth();
                 toast.error('Session expired. Please login again.');
                 const returnParam = getReturnUrlParam(location.pathname);
@@ -367,6 +413,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         <UserContext
             value={{
                 authInfo,
+                backendUnreachable,
                 clearAuth,
                 isAuthenticated,
                 isLoading,
