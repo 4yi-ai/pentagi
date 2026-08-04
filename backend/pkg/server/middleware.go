@@ -55,18 +55,6 @@ func autoLoginMiddleware(db *gorm.DB, cfg *config.Config, sessionTimeout int) gi
 
 		session := sessions.Default(c)
 
-		// Re-authenticate unless a still-VALID session already exists. Skipping on
-		// mere uid presence is wrong for a no-login deployment: a stale/expired
-		// session cookie (uid set but past its exp — e.g. a cookie left in the
-		// browser from a previous install) would be left in place, the downstream
-		// auth check would treat it as guest, and the login page would appear. So
-		// only skip when the session is present AND unexpired; otherwise fall
-		// through and mint a fresh admin session.
-		if session.Get("uid") != nil && sessionUnexpired(session) {
-			c.Next()
-			return
-		}
-
 		// Diagnostic breadcrumb surfaced on /info (auto_login_status) so a guest
 		// response is self-explaining without pod logs. Overwritten below as the
 		// flow progresses; "attempted" means the middleware ran but never authed.
@@ -122,6 +110,18 @@ func autoLoginMiddleware(db *gorm.DB, cfg *config.Config, sessionTimeout int) gi
 			return
 		}
 
+		// Leave a genuinely valid session alone (avoids re-saving the cookie on
+		// every request). "Valid" means it authenticates THIS admin — matching uid
+		// AND hash — and is unexpired. A cookie that merely has a uid is not enough:
+		// a stale cookie from a previous install carries a uid + a future exp but a
+		// hash that no longer matches, and the downstream auth check would reject it
+		// as guest. In that case we must re-mint rather than skip.
+		if sessionMatchesUser(session, user) && sessionUnexpired(session) {
+			c.Set("autoLoginStatus", "session_ok")
+			c.Next()
+			return
+		}
+
 		var privs []string
 		if err := db.Table("privileges").Where("role_id = ?", user.RoleID).Pluck("name", &privs).Error; err != nil {
 			c.Set("autoLoginStatus", "privs_error: "+err.Error())
@@ -165,6 +165,19 @@ func autoLoginMiddleware(db *gorm.DB, cfg *config.Config, sessionTimeout int) gi
 		c.Set("autoLoginStatus", "ok")
 		c.Next()
 	}
+}
+
+// sessionMatchesUser reports whether the session already authenticates exactly
+// the given user (both the id and the hash match). A stale cookie from an
+// earlier install keeps a uid but its hash no longer matches the current admin,
+// so this returns false and the caller re-mints the session.
+func sessionMatchesUser(session sessions.Session, user models.User) bool {
+	uid, ok := session.Get("uid").(uint64)
+	if !ok || uid != user.ID {
+		return false
+	}
+	uhash, ok := session.Get("uhash").(string)
+	return ok && uhash == user.Hash
 }
 
 // sessionUnexpired reports whether the session carries an "exp" (unix seconds)
