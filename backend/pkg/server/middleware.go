@@ -62,9 +62,15 @@ func autoLoginMiddleware(db *gorm.DB, cfg *config.Config, sessionTimeout int) gi
 			return
 		}
 
+		// Diagnostic breadcrumb surfaced on /info (auto_login_status) so a guest
+		// response is self-explaining without pod logs. Overwritten below as the
+		// flow progresses; "attempted" means the middleware ran but never authed.
+		c.Set("autoLoginStatus", "attempted")
+
 		var user models.User
 		if err := db.Take(&user, "mail = ?", cfg.AuthAutoLoginEmail).Error; err != nil {
 			if !gorm.IsRecordNotFoundError(err) {
+				c.Set("autoLoginStatus", "load_error: "+err.Error())
 				logger.FromContext(c).WithError(err).Error("auto-login: failed to load default admin user")
 				c.Next()
 				return
@@ -89,19 +95,23 @@ func autoLoginMiddleware(db *gorm.DB, cfg *config.Config, sessionTimeout int) gi
 				RoleID: roleID,
 			}
 			if cerr := db.Create(&newUser).Error; cerr != nil {
+				c.Set("autoLoginStatus", "create_error: "+cerr.Error())
 				logger.FromContext(c).WithError(cerr).Errorf("auto-login: failed to create default admin user '%s'", cfg.AuthAutoLoginEmail)
 				c.Next()
 				return
 			}
 			if lerr := db.Take(&user, "mail = ?", cfg.AuthAutoLoginEmail).Error; lerr != nil {
+				c.Set("autoLoginStatus", "reload_error: "+lerr.Error())
 				logger.FromContext(c).WithError(lerr).Error("auto-login: failed to reload created admin user")
 				c.Next()
 				return
 			}
+			c.Set("autoLoginStatus", "created")
 			logger.FromContext(c).Infof("auto-login: created default admin user '%s' (role %d)", cfg.AuthAutoLoginEmail, roleID)
 		}
 
 		if user.Status != models.UserStatusActive {
+			c.Set("autoLoginStatus", "inactive: "+string(user.Status))
 			logger.FromContext(c).Errorf("auto-login: default admin user is not active (status '%s')", user.Status)
 			c.Next()
 			return
@@ -109,6 +119,7 @@ func autoLoginMiddleware(db *gorm.DB, cfg *config.Config, sessionTimeout int) gi
 
 		var privs []string
 		if err := db.Table("privileges").Where("role_id = ?", user.RoleID).Pluck("name", &privs).Error; err != nil {
+			c.Set("autoLoginStatus", "privs_error: "+err.Error())
 			logger.FromContext(c).WithError(err).Error("auto-login: failed to load admin privileges")
 			c.Next()
 			return
@@ -116,6 +127,7 @@ func autoLoginMiddleware(db *gorm.DB, cfg *config.Config, sessionTimeout int) gi
 
 		uuid, err := rdb.MakeUuidStrFromHash(user.Hash)
 		if err != nil {
+			c.Set("autoLoginStatus", "uuid_error: "+err.Error())
 			logger.FromContext(c).WithError(err).Error("auto-login: failed to derive user uuid from hash")
 			c.Next()
 			return
@@ -139,11 +151,13 @@ func autoLoginMiddleware(db *gorm.DB, cfg *config.Config, sessionTimeout int) gi
 			MaxAge:   sessionTimeout,
 		})
 		if err := session.Save(); err != nil {
+			c.Set("autoLoginStatus", "save_error: "+err.Error())
 			logger.FromContext(c).WithError(err).Error("auto-login: failed to save admin session")
 			c.Next()
 			return
 		}
 
+		c.Set("autoLoginStatus", "ok")
 		c.Next()
 	}
 }

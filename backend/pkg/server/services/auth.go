@@ -770,16 +770,17 @@ func randBytes(nByte int) ([]byte, error) {
 }
 
 type info struct {
-	Type      string      `json:"type"`
-	AutoLogin bool        `json:"auto_login"`
-	Develop   bool        `json:"develop"`
-	User      models.User `json:"user"`
-	Role      models.Role `json:"role"`
-	Providers []string    `json:"providers"`
-	Privs     []string    `json:"privileges"`
-	OAuth     bool        `json:"oauth"`
-	IssuedAt  time.Time   `json:"issued_at"`
-	ExpiresAt time.Time   `json:"expires_at"`
+	Type            string      `json:"type"`
+	AutoLogin       bool        `json:"auto_login"`
+	AutoLoginStatus string      `json:"auto_login_status,omitempty"`
+	Develop         bool        `json:"develop"`
+	User            models.User `json:"user"`
+	Role            models.Role `json:"role"`
+	Providers       []string    `json:"providers"`
+	Privs           []string    `json:"privileges"`
+	OAuth           bool        `json:"oauth"`
+	IssuedAt        time.Time   `json:"issued_at"`
+	ExpiresAt       time.Time   `json:"expires_at"`
 }
 
 // Info is function to return settings and current information about system and config
@@ -808,6 +809,7 @@ func (s *AuthService) Info(c *gin.Context) {
 
 	resp.Privs = privs
 	resp.AutoLogin = s.cfg.AuthAutoLogin
+	resp.AutoLoginStatus = c.GetString("autoLoginStatus")
 	resp.IssuedAt = time.Unix(gtm, 0).UTC()
 	resp.ExpiresAt = time.Unix(exp, 0).UTC()
 	resp.Develop = version.IsDevelopMode()
