@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"math/big"
@@ -413,21 +412,25 @@ func fallbackTitle(input string) string {
 }
 
 // callSetupWithFallback runs a short provider "simple" call under a bounded
-// deadline. If the call exceeds the budget (cold/slow gateway) it returns the
-// fallback so creation can finish instead of tripping the ingress timeout.
-// Genuine (non-timeout) errors and parent-context cancellation still surface.
+// deadline. These calls (image / language / title selection) are cosmetic, but
+// on the request path: if one is slow or the gateway hiccups, creation used to
+// error out AFTER the flow row was already inserted — leaving an orphaned
+// "untitled" flow with no primary container, which then failed every reload
+// with "no primary container". So on ANY call failure (timeout or otherwise)
+// we fall back to a sensible default and let creation finish. Only genuine
+// parent-context cancellation (the whole request is gone) propagates.
 func callSetupWithFallback(ctx context.Context, prv provider.Provider, prompt, fallback string) (string, error) {
 	cctx, cancel := context.WithTimeout(ctx, setupCallTimeout)
 	defer cancel()
 
 	out, err := prv.Call(cctx, pconfig.OptionsTypeSimple, prompt)
 	if err != nil {
-		// Only the local budget expiring (not parent cancellation, not a real
-		// provider error) is treated as "too slow → use the default".
-		if ctx.Err() == nil && errors.Is(err, context.DeadlineExceeded) {
-			return fallback, nil
+		if ctx.Err() != nil {
+			return "", err
 		}
-		return "", err
+		logrus.WithContext(ctx).WithError(err).Warn(
+			"provider setup call failed; using fallback to keep flow/assistant creation responsive")
+		return fallback, nil
 	}
 
 	return out, nil
