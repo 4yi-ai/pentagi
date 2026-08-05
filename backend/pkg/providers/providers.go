@@ -391,9 +391,23 @@ func NewProviderController(
 // keeps creation responsive.
 const setupCallTimeout = 8 * time.Second
 
-// defaultSetupLanguage is the fallback UI/prompt language when the language
-// chooser call times out. Flows default to English elsewhere in the codebase.
-const defaultSetupLanguage = "English"
+// fallbackLanguage is used when the language-chooser call is cut off (cold
+// gateway). It keeps the reply in the user's own language by looking at the
+// input's script rather than defaulting to English, so a Chinese prompt still
+// gets a Chinese answer even when detection was skipped.
+func fallbackLanguage(input string) string {
+	for _, r := range input {
+		switch {
+		case r >= 0x3040 && r <= 0x30FF: // Hiragana / Katakana
+			return "Japanese"
+		case r >= 0xAC00 && r <= 0xD7A3: // Hangul
+			return "Korean"
+		case (r >= 0x4E00 && r <= 0x9FFF) || (r >= 0x3400 && r <= 0x4DBF): // CJK ideographs
+			return "Chinese"
+		}
+	}
+	return "English"
+}
 
 // fallbackTitle derives a plain title from the user input when the title
 // generator call times out, so a flow/assistant still gets a human-readable
@@ -420,20 +434,45 @@ func fallbackTitle(input string) string {
 // we fall back to a sensible default and let creation finish. Only genuine
 // parent-context cancellation (the whole request is gone) propagates.
 func callSetupWithFallback(ctx context.Context, prv provider.Provider, prompt, fallback string) (string, error) {
-	cctx, cancel := context.WithTimeout(ctx, setupCallTimeout)
-	defer cancel()
-
-	out, err := prv.Call(cctx, pconfig.OptionsTypeSimple, prompt)
-	if err != nil {
-		if ctx.Err() != nil {
-			return "", err
-		}
-		logrus.WithContext(ctx).WithError(err).Warn(
-			"provider setup call failed; using fallback to keep flow/assistant creation responsive")
-		return fallback, nil
+	type callResult struct {
+		out string
+		err error
 	}
 
-	return out, nil
+	// Race the call against a wall-clock budget rather than a context deadline:
+	// some providers ignore the ctx deadline and block on their own (much
+	// longer, ~60s) internal timeout, which alone eats the entire ingress
+	// budget and yields a 502. If the call overruns setupCallTimeout we return
+	// the fallback and let the in-flight call keep running on ctx (already
+	// bounded by the caller's detached provisioning context); its result is
+	// discarded.
+	ch := make(chan callResult, 1)
+	go func() {
+		out, err := prv.Call(ctx, pconfig.OptionsTypeSimple, prompt)
+		ch <- callResult{out: out, err: err}
+	}()
+
+	timer := time.NewTimer(setupCallTimeout)
+	defer timer.Stop()
+
+	select {
+	case r := <-ch:
+		if r.err != nil {
+			if ctx.Err() != nil {
+				return "", r.err
+			}
+			logrus.WithContext(ctx).WithError(r.err).Warn(
+				"provider setup call failed; using fallback to keep flow/assistant creation responsive")
+			return fallback, nil
+		}
+		return r.out, nil
+	case <-timer.C:
+		logrus.WithContext(ctx).Warnf(
+			"provider setup call exceeded %s; using fallback to avoid the ingress timeout", setupCallTimeout)
+		return fallback, nil
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
 }
 
 func (pc *providerController) NewFlowProvider(
@@ -475,7 +514,7 @@ func (pc *providerController) NewFlowProvider(
 		return nil, fmt.Errorf("failed to get language template: %w", err)
 	}
 
-	language, err := callSetupWithFallback(ctx, prv, languageTmpl, defaultSetupLanguage)
+	language, err := callSetupWithFallback(ctx, prv, languageTmpl, fallbackLanguage(input))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get language: %w", err)
 	}
@@ -621,7 +660,7 @@ func (pc *providerController) NewAssistantProvider(
 		return nil, fmt.Errorf("failed to get language template: %w", err)
 	}
 
-	language, err := callSetupWithFallback(ctx, prv, languageTmpl, defaultSetupLanguage)
+	language, err := callSetupWithFallback(ctx, prv, languageTmpl, fallbackLanguage(input))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get language: %w", err)
 	}
