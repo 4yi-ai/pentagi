@@ -107,7 +107,7 @@ export function MainSidebar() {
                             <Logo className="hover:animate-logo-spin size-6" />
                         </div>
                         <div className="grid flex-1 text-left leading-tight">
-                            <span className="truncate font-semibold">4YI Pentest</span>
+                            <span className="truncate font-semibold">{t('appName')}</span>
                         </div>
                     </SidebarMenuItem>
                 </SidebarMenu>

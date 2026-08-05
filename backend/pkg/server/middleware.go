@@ -110,6 +110,21 @@ func autoLoginMiddleware(db *gorm.DB, cfg *config.Config, sessionTimeout int) gi
 			return
 		}
 
+		// Auto-login deployments never show a login form, so the stock seed
+		// admin's "must change password before continuing" flag would strand
+		// the user on the password-change screen after every fresh install (an
+		// empty DB re-seeds admin@pentagi.com with password_change_required =
+		// true). Forcing a password change is meaningless without a login, so
+		// clear it once for the auto-login admin. The write only happens while
+		// the flag is still set, so steady-state requests skip it.
+		if user.PasswordChangeRequired {
+			if uerr := db.Model(&user).Update("password_change_required", false).Error; uerr != nil {
+				logger.FromContext(c).WithError(uerr).Warn("auto-login: failed to clear password_change_required")
+			} else {
+				user.PasswordChangeRequired = false
+			}
+		}
+
 		// Leave a genuinely valid session alone (avoids re-saving the cookie on
 		// every request). "Valid" means it authenticates THIS admin — matching uid
 		// AND hash — and is unexpired. A cookie that merely has a uid is not enough:

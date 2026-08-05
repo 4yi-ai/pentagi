@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"math/big"
@@ -382,6 +383,56 @@ func NewProviderController(
 	}, nil
 }
 
+// setupCallTimeout bounds each cosmetic provider-setup LLM call made while
+// creating a flow/assistant (image / language / title selection). On a cold
+// LLM gateway — e.g. the first message after the 4YI app wakes from idle
+// auto-suspend — these calls can each take tens of seconds; run sequentially
+// they push creation past the ~60s ingress idle timeout and the user sees a
+// 502 on the first message (a retry, now warm, succeeds). Bounding each call
+// keeps creation responsive.
+const setupCallTimeout = 8 * time.Second
+
+// defaultSetupLanguage is the fallback UI/prompt language when the language
+// chooser call times out. Flows default to English elsewhere in the codebase.
+const defaultSetupLanguage = "English"
+
+// fallbackTitle derives a plain title from the user input when the title
+// generator call times out, so a flow/assistant still gets a human-readable
+// label instead of blocking on a cold LLM gateway.
+func fallbackTitle(input string) string {
+	title := strings.TrimSpace(input)
+	title = strings.SplitN(title, "\n", 2)[0]
+	const maxRunes = 48
+	if r := []rune(title); len(r) > maxRunes {
+		title = strings.TrimSpace(string(r[:maxRunes])) + "…"
+	}
+	if title == "" {
+		return "New flow"
+	}
+	return title
+}
+
+// callSetupWithFallback runs a short provider "simple" call under a bounded
+// deadline. If the call exceeds the budget (cold/slow gateway) it returns the
+// fallback so creation can finish instead of tripping the ingress timeout.
+// Genuine (non-timeout) errors and parent-context cancellation still surface.
+func callSetupWithFallback(ctx context.Context, prv provider.Provider, prompt, fallback string) (string, error) {
+	cctx, cancel := context.WithTimeout(ctx, setupCallTimeout)
+	defer cancel()
+
+	out, err := prv.Call(cctx, pconfig.OptionsTypeSimple, prompt)
+	if err != nil {
+		// Only the local budget expiring (not parent cancellation, not a real
+		// provider error) is treated as "too slow → use the default".
+		if ctx.Err() == nil && errors.Is(err, context.DeadlineExceeded) {
+			return fallback, nil
+		}
+		return "", err
+	}
+
+	return out, nil
+}
+
 func (pc *providerController) NewFlowProvider(
 	ctx context.Context,
 	prvname provider.ProviderName,
@@ -408,7 +459,7 @@ func (pc *providerController) NewFlowProvider(
 		return nil, fmt.Errorf("failed to get primary docker image template: %w", err)
 	}
 
-	image, err := prv.Call(ctx, pconfig.OptionsTypeSimple, imageTmpl)
+	image, err := callSetupWithFallback(ctx, prv, imageTmpl, pc.docker.GetDefaultImage())
 	if err != nil {
 		return nil, fmt.Errorf("failed to select primary docker image via llm call: %w", err)
 	}
@@ -421,7 +472,7 @@ func (pc *providerController) NewFlowProvider(
 		return nil, fmt.Errorf("failed to get language template: %w", err)
 	}
 
-	language, err := prv.Call(ctx, pconfig.OptionsTypeSimple, languageTmpl)
+	language, err := callSetupWithFallback(ctx, prv, languageTmpl, defaultSetupLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get language: %w", err)
 	}
@@ -437,7 +488,7 @@ func (pc *providerController) NewFlowProvider(
 		return nil, fmt.Errorf("failed to get flow title template: %w", err)
 	}
 
-	title, err := prv.Call(ctx, pconfig.OptionsTypeSimple, titleTmpl)
+	title, err := callSetupWithFallback(ctx, prv, titleTmpl, fallbackTitle(input))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get flow title: %w", err)
 	}
@@ -567,7 +618,7 @@ func (pc *providerController) NewAssistantProvider(
 		return nil, fmt.Errorf("failed to get language template: %w", err)
 	}
 
-	language, err := prv.Call(ctx, pconfig.OptionsTypeSimple, languageTmpl)
+	language, err := callSetupWithFallback(ctx, prv, languageTmpl, defaultSetupLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get language: %w", err)
 	}
@@ -583,7 +634,7 @@ func (pc *providerController) NewAssistantProvider(
 		return nil, fmt.Errorf("failed to get flow title template: %w", err)
 	}
 
-	title, err := prv.Call(ctx, pconfig.OptionsTypeSimple, titleTmpl)
+	title, err := callSetupWithFallback(ctx, prv, titleTmpl, fallbackTitle(input))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get flow title: %w", err)
 	}

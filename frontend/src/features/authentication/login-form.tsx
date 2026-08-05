@@ -178,7 +178,7 @@ function LoginForm({ providers, returnUrl = '/flows/new' }: LoginFormProps) {
                 className="mx-auto grid w-[350px] gap-8"
                 onSubmit={form.handleSubmit(handleSubmit)}
             >
-                <h1 className="text-center text-3xl font-bold">4YI Pentest</h1>
+                <h1 className="text-center text-3xl font-bold">{t('appName')}</h1>
 
                 {providers?.length > 0 && (
                     <>
