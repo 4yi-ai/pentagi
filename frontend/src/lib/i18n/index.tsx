@@ -9,6 +9,12 @@ import { messages } from './messages';
 const LANG_STORAGE_KEY = 'lang';
 const DEFAULT_LANG: Lang = 'zh';
 
+interface I18nContextType {
+    lang: Lang;
+    setLang: (lang: Lang) => void;
+    t: (key: MessageKey) => string;
+}
+
 function isLang(value: unknown): value is Lang {
     return value === 'en' || value === 'zh';
 }
@@ -38,12 +44,6 @@ function resolveInitialLang(): Lang {
     return DEFAULT_LANG;
 }
 
-interface I18nContextType {
-    lang: Lang;
-    setLang: (lang: Lang) => void;
-    t: (key: MessageKey) => string;
-}
-
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
@@ -71,6 +71,25 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     return <I18nContext value={value}>{children}</I18nContext>;
 }
 
+// Localized product name for use in <title> and other brand surfaces.
+// Falls back to the English name when rendered outside an I18nProvider
+// (e.g. isolated unit tests) so it never throws.
+export function useAppName(): string {
+    const context = use(I18nContext);
+
+    return context ? context.t('appName') : messages.en.appName;
+}
+
+export function useLang(): { lang: Lang; setLang: (lang: Lang) => void } {
+    const { lang, setLang } = useI18n();
+
+    return { lang, setLang };
+}
+
+export function useT(): (key: MessageKey) => string {
+    return useI18n().t;
+}
+
 function useI18n(): I18nContextType {
     const context = use(I18nContext);
 
@@ -79,16 +98,6 @@ function useI18n(): I18nContextType {
     }
 
     return context;
-}
-
-export function useT(): (key: MessageKey) => string {
-    return useI18n().t;
-}
-
-export function useLang(): { lang: Lang; setLang: (lang: Lang) => void } {
-    const { lang, setLang } = useI18n();
-
-    return { lang, setLang };
 }
 
 export type { Lang, MessageKey };

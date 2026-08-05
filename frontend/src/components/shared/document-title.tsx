@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 
 import { useMatches } from 'react-router-dom';
 
+import { useAppName } from '@/lib/i18n';
 import { isApolloTitle } from '@/lib/route-titles/apollo-title';
 import { renderTitle, type RouteParams } from '@/lib/route-titles/render-title';
 
@@ -39,16 +40,17 @@ const hasTitle = (handle: unknown): handle is { title: TitleResolver } => {
  */
 export function DocumentTitle() {
     const matches = useMatches();
+    const appName = useAppName();
     const match = matches.findLast((m) => hasTitle(m.handle));
 
     if (!match || !hasTitle(match.handle)) {
-        return renderTitle(null);
+        return renderTitle(null, appName);
     }
 
     const value = match.handle.title;
 
     if (typeof value === 'string') {
-        return renderTitle(value);
+        return renderTitle(value, appName);
     }
 
     if (isApolloTitle(value)) {
@@ -57,5 +59,5 @@ export function DocumentTitle() {
         return <TitleComp params={match.params} />;
     }
 
-    return renderTitle(value(match.params));
+    return renderTitle(value(match.params), appName);
 }

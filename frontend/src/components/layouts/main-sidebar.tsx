@@ -5,7 +5,6 @@ import {
     FileText,
     Folder,
     GitFork,
-    KeyRound,
     Languages,
     LibraryBig,
     LogOut,
@@ -18,14 +17,13 @@ import {
     Sun,
     UserIcon,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link, useMatch, useParams } from 'react-router-dom';
 
 import type { Flow } from '@/providers/sidebar-flows-provider';
 import type { Theme } from '@/providers/theme-provider';
 
 import Logo from '@/components/icons/logo';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -49,7 +47,6 @@ import {
     SidebarRail,
 } from '@/components/ui/sidebar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PasswordChangeForm } from '@/features/authentication/password-change-form';
 import { useResourcesUpload } from '@/features/resources/use-resources-upload';
 import { useTheme } from '@/hooks/use-theme';
 import { useLang, useT } from '@/lib/i18n';
@@ -65,7 +62,6 @@ interface FlowMenuItemProps {
 }
 
 export function MainSidebar() {
-    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const isFlowsActive = useMatch('/flows/*');
     const isTemplatesActive = useMatch('/templates/*');
     const isKnowledgesActive = useMatch('/knowledges/*');
@@ -376,15 +372,6 @@ export function MainSidebar() {
                                         </TabsList>
                                     </Tabs>
                                 </DropdownMenuItem>
-                                {user?.type === 'local' && (
-                                    <>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={() => setIsPasswordModalOpen(true)}>
-                                            <KeyRound className="mr-2 size-4" />
-                                            {t('changePassword')}
-                                        </DropdownMenuItem>
-                                    </>
-                                )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => logout()}>
                                     <LogOut className="mr-2 size-4" />
@@ -407,21 +394,6 @@ export function MainSidebar() {
                 type="file"
                 {...resourcesUpload.fileInputProps}
             />
-
-            <Dialog
-                onOpenChange={setIsPasswordModalOpen}
-                open={isPasswordModalOpen}
-            >
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>{t('changePassword')}</DialogTitle>
-                    </DialogHeader>
-                    <PasswordChangeForm
-                        onCancel={() => setIsPasswordModalOpen(false)}
-                        onSuccess={() => setIsPasswordModalOpen(false)}
-                    />
-                </DialogContent>
-            </Dialog>
         </Sidebar>
     );
 }

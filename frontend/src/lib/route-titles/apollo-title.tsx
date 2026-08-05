@@ -1,6 +1,8 @@
 import type { QueryHookOptions, QueryResult } from '@apollo/client/react';
 import type { ComponentType } from 'react';
 
+import { useAppName } from '@/lib/i18n';
+
 import { renderTitle, type RouteParams } from './render-title';
 
 // Apollo codegen hook signature — `useXxxQuery({ variables, skip? })` or
@@ -62,6 +64,7 @@ export function apolloTitle<TData, TVars extends Record<string, unknown>>(
     opts: ApolloTitleOpts<TData, TVars>,
 ): ApolloTitleComponent {
     function ApolloTitle({ params }: { params: RouteParams }) {
+        const appName = useAppName();
         const vars = opts.variables(params);
         const { data } = opts.useQuery(
             vars === null
@@ -69,7 +72,7 @@ export function apolloTitle<TData, TVars extends Record<string, unknown>>(
                 : { fetchPolicy: 'cache-only', skip: false, variables: vars },
         );
 
-        return renderTitle(opts.select(data, params));
+        return renderTitle(opts.select(data, params), appName);
     }
 
     return Object.assign(ApolloTitle, { [APOLLO_TITLE_MARKER]: true as const });

@@ -2,6 +2,8 @@
 // Keys are shared between all languages; `en` defines the canonical key set.
 
 export const en = {
+    // Brand
+    appName: '4YI Pentest',
     // Sidebar
     newFlow: 'New Flow',
     dashboard: 'Dashboard',
@@ -572,6 +574,8 @@ export const en = {
 export type MessageKey = keyof typeof en;
 
 export const zh: Record<MessageKey, string> = {
+    // Brand
+    appName: '4YI 渗透测试',
     // Sidebar
     newFlow: '新建流程',
     dashboard: '仪表盘',
