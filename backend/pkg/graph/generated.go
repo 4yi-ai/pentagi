@@ -392,8 +392,9 @@ type ComplexityRoot struct {
 	}
 
 	Provider struct {
-		Name func(childComplexity int) int
-		Type func(childComplexity int) int
+		Model func(childComplexity int) int
+		Name  func(childComplexity int) int
+		Type  func(childComplexity int) int
 	}
 
 	ProviderConfig struct {
@@ -2657,6 +2658,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PromptsConfig.UserDefined(childComplexity), true
+
+	case "Provider.model":
+		if e.complexity.Provider.Model == nil {
+			break
+		}
+
+		return e.complexity.Provider.Model(childComplexity), true
 
 	case "Provider.name":
 		if e.complexity.Provider.Name == nil {
@@ -12247,6 +12255,8 @@ func (ec *executionContext) fieldContext_Assistant_provider(_ context.Context, f
 				return ec.fieldContext_Provider_name(ctx, field)
 			case "type":
 				return ec.fieldContext_Provider_type(ctx, field)
+			case "model":
+				return ec.fieldContext_Provider_model(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Provider", field.Name)
 		},
@@ -14225,6 +14235,8 @@ func (ec *executionContext) fieldContext_Flow_provider(_ context.Context, field 
 				return ec.fieldContext_Provider_name(ctx, field)
 			case "type":
 				return ec.fieldContext_Provider_type(ctx, field)
+			case "model":
+				return ec.fieldContext_Provider_model(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Provider", field.Name)
 		},
@@ -20068,6 +20080,47 @@ func (ec *executionContext) fieldContext_Provider_type(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Provider_model(ctx context.Context, field graphql.CollectedField, obj *model.Provider) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Provider_model(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Model, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Provider_model(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Provider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ProviderConfig_id(ctx context.Context, field graphql.CollectedField, obj *model.ProviderConfig) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ProviderConfig_id(ctx, field)
 	if err != nil {
@@ -22361,6 +22414,8 @@ func (ec *executionContext) fieldContext_Query_providers(_ context.Context, fiel
 				return ec.fieldContext_Provider_name(ctx, field)
 			case "type":
 				return ec.fieldContext_Provider_type(ctx, field)
+			case "model":
+				return ec.fieldContext_Provider_model(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Provider", field.Name)
 		},
@@ -38908,6 +38963,8 @@ func (ec *executionContext) _Provider(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "model":
+			out.Values[i] = ec._Provider_model(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

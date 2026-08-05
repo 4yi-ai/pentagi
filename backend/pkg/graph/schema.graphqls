@@ -678,6 +678,10 @@ enum UsageStatsPeriod {
 type Provider {
   name: String!
   type: ProviderType!
+  # Configured primary model for this provider (e.g. the LLM_SERVER_MODEL of a
+  # "custom" gateway provider). Used as the human-facing label so the UI shows
+  # the chosen model instead of the generic provider name.
+  model: String
 }
 
 # Provider model manifest

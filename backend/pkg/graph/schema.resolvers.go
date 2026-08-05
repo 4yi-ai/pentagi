@@ -1347,9 +1347,20 @@ func (r *queryResolver) Providers(ctx context.Context) ([]*model.Provider, error
 
 	providersList := make([]*model.Provider, len(providers))
 	for i, prvname := range providers.ListNames() {
+		prv := providers[prvname]
+
+		// Surface the configured primary model (e.g. a custom gateway's
+		// LLM_SERVER_MODEL) so the UI can label the provider by the model the
+		// operator chose instead of the generic provider name.
+		var modelPtr *string
+		if m := prv.Model(pconfig.OptionsTypePrimaryAgent); m != "" {
+			modelPtr = &m
+		}
+
 		providersList[i] = &model.Provider{
-			Name: string(prvname),
-			Type: model.ProviderType(providers[prvname].Type()),
+			Name:  string(prvname),
+			Type:  model.ProviderType(prv.Type()),
+			Model: modelPtr,
 		}
 	}
 

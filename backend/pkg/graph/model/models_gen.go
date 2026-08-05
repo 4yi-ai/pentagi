@@ -349,8 +349,9 @@ type PromptsConfig struct {
 }
 
 type Provider struct {
-	Name string       `json:"name"`
-	Type ProviderType `json:"type"`
+	Name  string       `json:"name"`
+	Type  ProviderType `json:"type"`
+	Model *string      `json:"model,omitempty"`
 }
 
 type ProviderConfig struct {

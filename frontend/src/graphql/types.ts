@@ -487,7 +487,7 @@ export type ModelConfigFragmentFragment = {
     price: { input: number; output: number; cacheRead: number; cacheWrite: number } | null;
 };
 
-export type ProviderFragmentFragment = { name: string; type: ProviderType };
+export type ProviderFragmentFragment = { name: string; type: ProviderType; model: string | null };
 
 export type ProviderConfigFragmentFragment = {
     id: string;
@@ -1396,6 +1396,7 @@ export const ProviderFragmentFragmentDoc = gql`
     fragment providerFragment on Provider {
         name
         type
+        model
     }
 `;
 export const FlowFragmentFragmentDoc = gql`

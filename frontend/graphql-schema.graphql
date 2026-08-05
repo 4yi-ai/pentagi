@@ -247,6 +247,7 @@ fragment modelConfigFragment on ModelConfig {
 fragment providerFragment on Provider {
     name
     type
+    model
 }
 
 fragment providerConfigFragment on ProviderConfig {
