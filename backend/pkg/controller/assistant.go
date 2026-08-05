@@ -67,6 +67,12 @@ type newAssistantWorkerCtx struct {
 	resources []database.UserResource
 	fw        FlowWorker
 
+	// onCreated, when set, is invoked as soon as the assistant DB row exists —
+	// before the slow per-provider LLM setup — so the caller can return to the
+	// client promptly instead of waiting for full provisioning (which can
+	// exceed the ingress timeout and surface as a 502).
+	onCreated func(database.Assistant)
+
 	flowWorkerCtx
 }
 
@@ -134,6 +140,12 @@ func NewAssistantWorker(ctx context.Context, awc newAssistantWorkerCtx) (Assista
 
 	logger = logger.WithField("assistant_id", assistant.ID)
 	logger.Info("assistant created in DB")
+
+	// The row now exists (status "created"); let the caller hand it back to the
+	// client immediately while the rest of provisioning continues.
+	if awc.onCreated != nil {
+		awc.onCreated(assistant)
+	}
 
 	ctx, observation := obs.Observer.NewObservation(ctx,
 		langfuse.WithObservationTraceContext(

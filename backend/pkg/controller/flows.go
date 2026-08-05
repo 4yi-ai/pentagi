@@ -43,6 +43,7 @@ type FlowController interface {
 		prvtype provider.ProviderType,
 		functions *tools.Functions,
 		resources []database.UserResource,
+		onCreated func(database.Assistant),
 	) (AssistantWorker, error)
 	LoadFlows(ctx context.Context) error
 	ListFlows(ctx context.Context) []FlowWorker
@@ -191,6 +192,7 @@ func (fc *flowController) CreateAssistant(
 	prvtype provider.ProviderType,
 	functions *tools.Functions,
 	resources []database.UserResource,
+	onCreated func(database.Assistant),
 ) (AssistantWorker, error) {
 	fc.mx.Lock()
 	defer fc.mx.Unlock()
@@ -301,6 +303,7 @@ func (fc *flowController) CreateAssistant(
 		functions:     functions,
 		resources:     resources,
 		fw:            fw,
+		onCreated:     onCreated,
 		flowWorkerCtx: flowWorkerCtx,
 	})
 	if err != nil {

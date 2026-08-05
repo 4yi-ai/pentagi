@@ -330,6 +330,7 @@ func (s *AssistantService) CreateFlowAssistant(c *gin.Context) {
 		prvtype,
 		createAssistant.Functions,
 		dbResources,
+		nil,
 	)
 	if err != nil {
 		logger.FromContext(c).WithError(err).Errorf("error creating assistant")

@@ -324,22 +324,6 @@ func (r *mutationResolver) CreateAssistant(ctx context.Context, flowID int64, mo
 	}
 	prvtype := prv.Type()
 
-	// Snapshot the flow's existing assistants so we can recognise the one this
-	// call creates. The assistant DB row is inserted early — before the slow
-	// per-provider LLM setup calls (image/language/title selection) — so on a
-	// cold start (e.g. waking from 4YI idle auto-suspend) we can return it
-	// promptly instead of blocking the request until every provider round-trip
-	// finishes. Blocking is what makes the first message time out at the
-	// ingress and surface to the user as a 502.
-	priorAssistants := make(map[int64]struct{})
-	if flowID != 0 {
-		if existing, err := r.DB.GetFlowAssistants(ctx, flowID); err == nil {
-			for _, a := range existing {
-				priorAssistants[a.ID] = struct{}{}
-			}
-		}
-	}
-
 	// Provision on a context detached from the request. A gateway timeout or a
 	// client disconnect must NOT abort creation midway: that used to leave the
 	// assistant row created but never registered in the flow's in-memory map,
@@ -348,6 +332,20 @@ func (r *mutationResolver) CreateAssistant(ctx context.Context, flowID int64, mo
 	// hard timeout guards against a wedged LLM gateway leaking the goroutine.
 	provCtx, provCancel := context.WithTimeout(context.WithoutCancel(ctx), createAssistantProvisionTimeout)
 
+	// The assistant DB row is inserted early — before the slow per-provider LLM
+	// setup (image/language/title) and, for a new flow, before the flow-level
+	// setup too. Return the moment that row exists so the first message never
+	// blocks the request long enough to trip the ingress timeout (a 502 while
+	// the flow actually gets created in the background). Provisioning and the
+	// answer continue on provCtx and stream over subscriptions.
+	createdCh := make(chan database.Assistant, 1)
+	onCreated := func(a database.Assistant) {
+		select {
+		case createdCh <- a:
+		default:
+		}
+	}
+
 	type createResult struct {
 		aw  controller.AssistantWorker
 		err error
@@ -355,98 +353,28 @@ func (r *mutationResolver) CreateAssistant(ctx context.Context, flowID int64, mo
 	resultCh := make(chan createResult, 1)
 	go func() {
 		defer provCancel()
-		aw, err := r.Controller.CreateAssistant(provCtx, uid, flowID, input, useAgents, prvname, prvtype, nil, dbResources)
+		aw, err := r.Controller.CreateAssistant(provCtx, uid, flowID, input, useAgents, prvname, prvtype, nil, dbResources, onCreated)
 		resultCh <- createResult{aw: aw, err: err}
 	}()
 
-	poll := time.NewTicker(createAssistantPollInterval)
-	defer poll.Stop()
+	select {
+	case created := <-createdCh:
+		// Row exists — hand it back in its "created" state.
+		return r.flowAssistantResponse(ctx, created.ID)
 
-	for {
-		select {
-		case res := <-resultCh:
-			// Provisioning finished (warm path) or failed before the row landed.
-			if res.err != nil {
-				return nil, res.err
-			}
-			return r.flowAssistantResponse(ctx, res.aw.GetAssistantID())
-
-		case <-poll.C:
-			// The row appears once CreateAssistant inserts it, ahead of the LLM
-			// setup. Hand it back in "created" state; provisioning and the first
-			// answer continue in the background and stream over subscriptions.
-			if id, ok := r.newlyCreatedAssistant(ctx, flowID, priorAssistants); ok {
-				return r.flowAssistantResponse(ctx, id)
-			}
-
-		case <-ctx.Done():
-			// Client/gateway gave up. Provisioning keeps running on provCtx and
-			// self-heals; the assistant will arrive via subscription.
-			return nil, ctx.Err()
+	case res := <-resultCh:
+		// Provisioning finished (warm path) or, more likely, failed before the
+		// row was inserted (e.g. flow creation error) — surface that error.
+		if res.err != nil {
+			return nil, res.err
 		}
+		return r.flowAssistantResponse(ctx, res.aw.GetAssistantID())
+
+	case <-ctx.Done():
+		// Client/gateway gave up. Provisioning keeps running on provCtx and
+		// self-heals; the assistant will arrive via subscription.
+		return nil, ctx.Err()
 	}
-}
-
-// createAssistantProvisionTimeout bounds background assistant provisioning so a
-// stalled LLM/executor cold start cannot leak the goroutine (and the flow
-// controller lock it holds) indefinitely.
-const createAssistantProvisionTimeout = 5 * time.Minute
-
-// createAssistantPollInterval is how often CreateAssistant checks whether the
-// assistant row has been inserted so it can return early during a cold start.
-const createAssistantPollInterval = 300 * time.Millisecond
-
-// newlyCreatedAssistant returns the id of the newest assistant in flowID that
-// was not present in prior (i.e. the one the in-flight CreateAssistant just
-// created), or false if none has appeared yet. Only meaningful for an existing
-// flow; a brand-new flow (flowID == 0) creates its row after the flow's own LLM
-// setup, so there is nothing to return early.
-func (r *mutationResolver) newlyCreatedAssistant(ctx context.Context, flowID int64, prior map[int64]struct{}) (int64, bool) {
-	if flowID == 0 {
-		return 0, false
-	}
-
-	assistants, err := r.DB.GetFlowAssistants(ctx, flowID)
-	if err != nil {
-		return 0, false
-	}
-
-	var (
-		newest int64
-		found  bool
-	)
-	for _, a := range assistants {
-		if _, existed := prior[a.ID]; existed {
-			continue
-		}
-		if a.ID > newest {
-			newest = a.ID
-			found = true
-		}
-	}
-
-	return newest, found
-}
-
-// flowAssistantResponse builds the CreateAssistant mutation payload from the
-// current DB state for the given assistant.
-func (r *mutationResolver) flowAssistantResponse(ctx context.Context, assistantID int64) (*model.FlowAssistant, error) {
-	assistant, err := r.DB.GetAssistant(ctx, assistantID)
-	if err != nil {
-		return nil, err
-	}
-
-	flow, err := r.DB.GetFlow(ctx, assistant.FlowID)
-	if err != nil {
-		return nil, err
-	}
-
-	containers, err := r.DB.GetFlowContainers(ctx, assistant.FlowID)
-	if err != nil {
-		return nil, err
-	}
-
-	return converter.ConvertFlowAssistant(flow, containers, assistant), nil
 }
 
 // CallAssistant is the resolver for the callAssistant field.
@@ -529,28 +457,6 @@ func (r *mutationResolver) StopAssistant(ctx context.Context, flowID int64, assi
 	}
 
 	r.Subscriptions.NewFlowPublisher(fw.GetUserID(), flowID).AssistantUpdated(ctx, assistant)
-
-	return converter.ConvertAssistant(assistant), nil
-}
-
-// stopAssistantFallback handles StopAssistant when no in-memory worker exists.
-// If the assistant row is present it is returned as-is (no error), so the UI
-// can recover; otherwise the original lookup error is surfaced.
-func (r *mutationResolver) stopAssistantFallback(
-	ctx context.Context, flowID, assistantID int64, cause error,
-) (*model.Assistant, error) {
-	assistant, dbErr := r.DB.GetFlowAssistant(ctx, database.GetFlowAssistantParams{
-		ID:     assistantID,
-		FlowID: flowID,
-	})
-	if dbErr != nil {
-		return nil, cause
-	}
-
-	r.Logger.WithFields(logrus.Fields{
-		"flow":      flowID,
-		"assistant": assistantID,
-	}).WithError(cause).Warn("stop assistant: no in-memory worker; returning current state")
 
 	return converter.ConvertAssistant(assistant), nil
 }
