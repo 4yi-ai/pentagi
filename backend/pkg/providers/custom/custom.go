@@ -16,9 +16,13 @@ import (
 )
 
 func BuildProviderConfig(cfg *config.Config, configData []byte) (*pconfig.ProviderConfig, error) {
+	// NOTE: do NOT set top_p alongside temperature. The 4YI gateway proxies
+	// models to AWS Bedrock, whose Anthropic (Claude) models reject requests
+	// that specify both ("temperature and top_p cannot both be specified for
+	// this model; please use only one") and return a 502. top_p = 1.0 is a
+	// no-op anyway, so we keep only temperature for broad compatibility.
 	defaultOptions := []llms.CallOption{
 		llms.WithTemperature(1.0),
-		llms.WithTopP(1.0),
 		llms.WithN(1),
 		llms.WithMaxTokens(16384),
 	}
