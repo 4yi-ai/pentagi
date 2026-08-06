@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "services": [
+    {
+      "name": "web",
+      "dockerfile": "Dockerfile",
+      "context": ".",
+      "route": "public",
+      "port": 8443,
+      "healthPath": "/healthz",
+      "env": {
+        "SERVER_HOST": "0.0.0.0",
+        "SERVER_PORT": "8443",
+        "SERVER_USE_SSL": "false",
+        "EXECUTION_BACKEND": "executor",
+        "EXECUTOR_URL": "http://pentagi-kali-executor:8022",
+        "EXECUTOR_DEFAULT_IMAGE": "vxcontrol/kali-linux:latest",
+        "DATABASE_URL": "postgres://pentagiuser:pentagipass@pentagi-pgvector:5432/pentagidb?sslmode=disable",
+        "AUTH_AUTO_LOGIN": "true",
+        "AUTH_AUTO_LOGIN_EMAIL": "admin@pentagi.com"
+      },
+      "resources": { "cpu": 1, "memoryMb": 6144 }
+    },
+    {
+      "name": "pgvector",
+      "dockerfile": "Dockerfile",
+      "context": "deploy/4yi/pgvector",
+      "route": "internal",
+      "port": 5432,
+      "env": {
+        "POSTGRES_DB": "pentagidb",
+        "POSTGRES_USER": "pentagiuser",
+        "POSTGRES_PASSWORD": "pentagipass",
+        "PGDATA": "/var/lib/postgresql/data/pgdata"
+      },
+      "storage": { "sizeGb": 10, "mountPath": "/var/lib/postgresql/data", "fsGroup": 999 },
+      "resources": { "cpu": 0.5, "memoryMb": 1024 }
+    },
+    {
+      "name": "kali-executor",
+      "dockerfile": "Dockerfile",
+      "context": "backend",
+      "route": "internal",
+      "port": 8022,
+      "healthPath": "/v1/health",
+      "resources": { "cpu": 1, "memoryMb": 4096 }
+    }
+  ],
+  "models": [
+    {
+      "env": "LLM_SERVER_MODEL",
+      "type": "chat",
+      "default": "anthropic.claude-sonnet-4-6",
+      "allowed": [
+        "anthropic.claude-opus-4-6-v1",
+        "anthropic.claude-sonnet-4-6",
+        "deepseek.v3.2",
+        "deepseek-v4-pro",
+        "moonshotai.kimi-k2.5",
+        "gpt-5.5-pro",
+        "grok-4.3",
+        "qwen3.7-max"
+      ]
+    }
+  ]
+}

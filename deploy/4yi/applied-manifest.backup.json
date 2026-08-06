@@ -1,0 +1,59 @@
+{
+  "_comment": "BACKUP of the WORKING applied app-platform manifest for the PentAGI 4YI marketplace app (spec 5221238b-c2d4-4dc7-b877-d2c048b6d47e), captured 2026-08-06 before introducing 4yi-app.json. This 3-service shape (web public + pgvector managed postgres + kali-executor internal) was hand-shaped in the Deployment Proposal and is known-good. If the 4yi-app.json declaration path produces a worse result, restore this by re-shaping the Deployment Proposal to match, or re-Apply this manifest.",
+  "app": {
+    "name": "Pentagi",
+    "type": "dedicated_app"
+  },
+  "version": 1,
+  "services": [
+    {
+      "name": "web",
+      "type": "web",
+      "route": "public",
+      "port": 8443,
+      "imageSource": "build",
+      "build": { "context": ".", "dockerfile": "Dockerfile" },
+      "healthPath": "/healthz",
+      "resources": { "cpu": 1, "memoryMb": 6144, "replicas": { "max": 1, "min": 1 } },
+      "env": {
+        "SERVER_HOST": "0.0.0.0",
+        "SERVER_PORT": "8443",
+        "DATABASE_URL": "postgres://pentagiuser:pentagipass@pentagi-pgvector:5432/pentagidb?sslmode=disable",
+        "EXECUTOR_URL": "http://pentagi-kali-executor:8022",
+        "SERVER_USE_SSL": "false",
+        "AUTH_AUTO_LOGIN": "true",
+        "EXECUTION_BACKEND": "executor",
+        "AUTH_AUTO_LOGIN_EMAIL": "admin@pentagi.com",
+        "EXECUTOR_DEFAULT_IMAGE": "vxcontrol/kali-linux:latest"
+      },
+      "metadata": { "dns_aliases": ["pentagi"] }
+    },
+    {
+      "name": "pgvector",
+      "type": "postgres",
+      "route": "internal",
+      "port": 5432,
+      "imageSource": "registry",
+      "image": "vxcontrol/pgvector:latest",
+      "storage": { "sizeGb": 10, "subPath": "pgdata", "mountPath": "/var/lib/postgresql/data" },
+      "resources": { "cpu": 0.5, "memoryMb": 1024, "replicas": { "max": 1, "min": 1 } },
+      "env": {
+        "POSTGRES_DB": "pentagidb",
+        "POSTGRES_USER": "pentagiuser",
+        "POSTGRES_PASSWORD": "pentagipass"
+      },
+      "metadata": { "dns_aliases": ["pgvector"] }
+    },
+    {
+      "name": "kali-executor",
+      "type": "api",
+      "route": "internal",
+      "port": 8022,
+      "imageSource": "build",
+      "build": { "context": "backend", "dockerfile": "Dockerfile" },
+      "healthPath": "/v1/health",
+      "resources": { "cpu": 1, "memoryMb": 4096, "replicas": { "max": 1, "min": 1 } },
+      "metadata": { "dns_aliases": ["kali-executor"] }
+    }
+  ]
+}
