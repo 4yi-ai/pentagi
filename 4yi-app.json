@@ -3,6 +3,8 @@
   "services": [
     {
       "name": "web",
+      "type": "web",
+      "imageSource": "build",
       "dockerfile": "Dockerfile",
       "context": ".",
       "route": "public",
@@ -23,21 +25,23 @@
     },
     {
       "name": "pgvector",
-      "dockerfile": "Dockerfile",
-      "context": "deploy/4yi/pgvector",
+      "type": "postgres",
+      "imageSource": "registry",
+      "image": "vxcontrol/pgvector:latest",
       "route": "internal",
       "port": 5432,
       "env": {
         "POSTGRES_DB": "pentagidb",
         "POSTGRES_USER": "pentagiuser",
-        "POSTGRES_PASSWORD": "pentagipass",
-        "PGDATA": "/var/lib/postgresql/data/pgdata"
+        "POSTGRES_PASSWORD": "pentagipass"
       },
-      "storage": { "sizeGb": 10, "mountPath": "/var/lib/postgresql/data", "fsGroup": 999 },
+      "storage": { "sizeGb": 10, "mountPath": "/var/lib/postgresql/data", "subPath": "pgdata" },
       "resources": { "cpu": 0.5, "memoryMb": 1024 }
     },
     {
       "name": "kali-executor",
+      "type": "api",
+      "imageSource": "build",
       "dockerfile": "Dockerfile",
       "context": "backend",
       "route": "internal",
