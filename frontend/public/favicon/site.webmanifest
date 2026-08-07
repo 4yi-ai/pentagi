@@ -3,13 +3,13 @@
     "short_name": "4YI Pentest",
     "icons": [
         {
-            "src": "/favicon/icon-4yi-192.png",
+            "src": "/favicon/icon-4yi-192.png?v=20260807",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "/favicon/icon-4yi-512.png",
+            "src": "/favicon/icon-4yi-512.png?v=20260807",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"

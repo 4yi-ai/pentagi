@@ -372,11 +372,15 @@ export function MainSidebar() {
                                         </TabsList>
                                     </Tabs>
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => logout()}>
-                                    <LogOut className="mr-2 size-4" />
-                                    {t('logout')}
-                                </DropdownMenuItem>
+                                {!authInfo?.auto_login && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => logout()}>
+                                            <LogOut className="mr-2 size-4" />
+                                            {t('logout')}
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </SidebarMenuItem>
