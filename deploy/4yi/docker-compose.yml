@@ -31,7 +31,7 @@ services:
       - PENTAGI_POSTGRES_DB=${PENTAGI_POSTGRES_DB:-pentagidb}
       # LLM gateway (4YI). Base URL + key are injected as platform secrets.
       - LLM_SERVER_URL=${LLM_SERVER_URL}
-      - LLM_SERVER_MODEL=${LLM_SERVER_MODEL:-anthropic.claude-sonnet-4-6}
+      - LLM_SERVER_MODEL=${LLM_SERVER_MODEL:-claude-sonnet-4-6}
       - SERVER_PORT=8443
       - SERVER_USE_SSL=false        # TLS is terminated by the platform ALB ingress
     ports:

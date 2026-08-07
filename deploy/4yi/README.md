@@ -74,7 +74,7 @@ services:
       EXECUTION_BACKEND: "executor"
       EXECUTOR_URL: "http://kali-executor:8022"
       LLM_SERVER_URL: "https://<gateway>/api/v1"
-      LLM_SERVER_MODEL: "anthropic.claude-sonnet-4-6"
+      LLM_SERVER_MODEL: "claude-sonnet-4-6"
     secrets:
       EXECUTOR_TOKEN: "secret:executor-token"
       LLM_SERVER_KEY: "secret:llm-server-key"
