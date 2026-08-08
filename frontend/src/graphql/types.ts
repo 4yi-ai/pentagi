@@ -777,22 +777,49 @@ export type FlowQueryVariables = Exact<{
     id: string | number;
 }>;
 
-export type FlowQuery = {
-    flow: FlowFragmentFragment;
-    tasks: Array<TaskFragmentFragment> | null;
-    screenshots: Array<ScreenshotFragmentFragment> | null;
-    terminalLogs: Array<TerminalLogFragmentFragment> | null;
-    messageLogs: Array<MessageLogFragmentFragment> | null;
-    agentLogs: Array<AgentLogFragmentFragment> | null;
-    searchLogs: Array<SearchLogFragmentFragment> | null;
-    vectorStoreLogs: Array<VectorStoreLogFragmentFragment> | null;
-};
+export type FlowQuery = { flow: FlowFragmentFragment };
 
 export type TasksQueryVariables = Exact<{
     flowId: string | number;
 }>;
 
 export type TasksQuery = { tasks: Array<TaskFragmentFragment> | null };
+
+export type ScreenshotsQueryVariables = Exact<{
+    flowId: string | number;
+}>;
+
+export type ScreenshotsQuery = { screenshots: Array<ScreenshotFragmentFragment> | null };
+
+export type TerminalLogsQueryVariables = Exact<{
+    flowId: string | number;
+}>;
+
+export type TerminalLogsQuery = { terminalLogs: Array<TerminalLogFragmentFragment> | null };
+
+export type MessageLogsQueryVariables = Exact<{
+    flowId: string | number;
+}>;
+
+export type MessageLogsQuery = { messageLogs: Array<MessageLogFragmentFragment> | null };
+
+export type AgentLogsQueryVariables = Exact<{
+    flowId: string | number;
+}>;
+
+export type AgentLogsQuery = { agentLogs: Array<AgentLogFragmentFragment> | null };
+
+export type SearchLogsQueryVariables = Exact<{
+    flowId: string | number;
+}>;
+
+export type SearchLogsQuery = { searchLogs: Array<SearchLogFragmentFragment> | null };
+
+export type VectorStoreLogsQueryVariables = Exact<{
+    flowId: string | number;
+}>;
+
+export type VectorStoreLogsQuery = { vectorStoreLogs: Array<VectorStoreLogFragmentFragment> | null };
 
 export type FlowFilesQueryVariables = Exact<{
     flowId: string | number;
@@ -2511,36 +2538,8 @@ export const FlowDocument = gql`
         flow(flowId: $id) {
             ...flowFragment
         }
-        tasks(flowId: $id) {
-            ...taskFragment
-        }
-        screenshots(flowId: $id) {
-            ...screenshotFragment
-        }
-        terminalLogs(flowId: $id) {
-            ...terminalLogFragment
-        }
-        messageLogs(flowId: $id) {
-            ...messageLogFragment
-        }
-        agentLogs(flowId: $id) {
-            ...agentLogFragment
-        }
-        searchLogs(flowId: $id) {
-            ...searchLogFragment
-        }
-        vectorStoreLogs(flowId: $id) {
-            ...vectorStoreLogFragment
-        }
     }
     ${FlowFragmentFragmentDoc}
-    ${TaskFragmentFragmentDoc}
-    ${ScreenshotFragmentFragmentDoc}
-    ${TerminalLogFragmentFragmentDoc}
-    ${MessageLogFragmentFragmentDoc}
-    ${AgentLogFragmentFragmentDoc}
-    ${SearchLogFragmentFragmentDoc}
-    ${VectorStoreLogFragmentFragmentDoc}
 `;
 
 /**
@@ -2646,6 +2645,375 @@ export type TasksQueryHookResult = ReturnType<typeof useTasksQuery>;
 export type TasksLazyQueryHookResult = ReturnType<typeof useTasksLazyQuery>;
 export type TasksSuspenseQueryHookResult = ReturnType<typeof useTasksSuspenseQuery>;
 export type TasksQueryResult = ApolloReactCommon.QueryResult<TasksQuery, TasksQueryVariables>;
+export const ScreenshotsDocument = gql`
+    query screenshots($flowId: ID!) {
+        screenshots(flowId: $flowId) {
+            ...screenshotFragment
+        }
+    }
+    ${ScreenshotFragmentFragmentDoc}
+`;
+
+/**
+ * __useScreenshotsQuery__
+ *
+ * To run a query within a React component, call `useScreenshotsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useScreenshotsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useScreenshotsQuery({
+ *   variables: {
+ *      flowId: // value for 'flowId'
+ *   },
+ * });
+ */
+export function useScreenshotsQuery(
+    baseOptions: ApolloReactHooks.QueryHookOptions<ScreenshotsQuery, ScreenshotsQueryVariables> &
+        ({ variables: ScreenshotsQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useQuery<ScreenshotsQuery, ScreenshotsQueryVariables>(ScreenshotsDocument, options);
+}
+export function useScreenshotsLazyQuery(
+    baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ScreenshotsQuery, ScreenshotsQueryVariables>,
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useLazyQuery<ScreenshotsQuery, ScreenshotsQueryVariables>(ScreenshotsDocument, options);
+}
+// @ts-ignore
+export function useScreenshotsSuspenseQuery(
+    baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<ScreenshotsQuery, ScreenshotsQueryVariables>,
+): ApolloReactHooks.UseSuspenseQueryResult<ScreenshotsQuery, ScreenshotsQueryVariables>;
+export function useScreenshotsSuspenseQuery(
+    baseOptions?:
+        | ApolloReactHooks.SkipToken
+        | ApolloReactHooks.SuspenseQueryHookOptions<ScreenshotsQuery, ScreenshotsQueryVariables>,
+): ApolloReactHooks.UseSuspenseQueryResult<ScreenshotsQuery | undefined, ScreenshotsQueryVariables>;
+export function useScreenshotsSuspenseQuery(
+    baseOptions?:
+        | ApolloReactHooks.SkipToken
+        | ApolloReactHooks.SuspenseQueryHookOptions<ScreenshotsQuery, ScreenshotsQueryVariables>,
+) {
+    const options = baseOptions === ApolloReactHooks.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useSuspenseQuery<ScreenshotsQuery, ScreenshotsQueryVariables>(ScreenshotsDocument, options);
+}
+export type ScreenshotsQueryHookResult = ReturnType<typeof useScreenshotsQuery>;
+export type ScreenshotsLazyQueryHookResult = ReturnType<typeof useScreenshotsLazyQuery>;
+export type ScreenshotsSuspenseQueryHookResult = ReturnType<typeof useScreenshotsSuspenseQuery>;
+export type ScreenshotsQueryResult = ApolloReactCommon.QueryResult<ScreenshotsQuery, ScreenshotsQueryVariables>;
+export const TerminalLogsDocument = gql`
+    query terminalLogs($flowId: ID!) {
+        terminalLogs(flowId: $flowId) {
+            ...terminalLogFragment
+        }
+    }
+    ${TerminalLogFragmentFragmentDoc}
+`;
+
+/**
+ * __useTerminalLogsQuery__
+ *
+ * To run a query within a React component, call `useTerminalLogsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTerminalLogsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTerminalLogsQuery({
+ *   variables: {
+ *      flowId: // value for 'flowId'
+ *   },
+ * });
+ */
+export function useTerminalLogsQuery(
+    baseOptions: ApolloReactHooks.QueryHookOptions<TerminalLogsQuery, TerminalLogsQueryVariables> &
+        ({ variables: TerminalLogsQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useQuery<TerminalLogsQuery, TerminalLogsQueryVariables>(TerminalLogsDocument, options);
+}
+export function useTerminalLogsLazyQuery(
+    baseOptions?: ApolloReactHooks.LazyQueryHookOptions<TerminalLogsQuery, TerminalLogsQueryVariables>,
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useLazyQuery<TerminalLogsQuery, TerminalLogsQueryVariables>(TerminalLogsDocument, options);
+}
+// @ts-ignore
+export function useTerminalLogsSuspenseQuery(
+    baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<TerminalLogsQuery, TerminalLogsQueryVariables>,
+): ApolloReactHooks.UseSuspenseQueryResult<TerminalLogsQuery, TerminalLogsQueryVariables>;
+export function useTerminalLogsSuspenseQuery(
+    baseOptions?:
+        | ApolloReactHooks.SkipToken
+        | ApolloReactHooks.SuspenseQueryHookOptions<TerminalLogsQuery, TerminalLogsQueryVariables>,
+): ApolloReactHooks.UseSuspenseQueryResult<TerminalLogsQuery | undefined, TerminalLogsQueryVariables>;
+export function useTerminalLogsSuspenseQuery(
+    baseOptions?:
+        | ApolloReactHooks.SkipToken
+        | ApolloReactHooks.SuspenseQueryHookOptions<TerminalLogsQuery, TerminalLogsQueryVariables>,
+) {
+    const options = baseOptions === ApolloReactHooks.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useSuspenseQuery<TerminalLogsQuery, TerminalLogsQueryVariables>(
+        TerminalLogsDocument,
+        options,
+    );
+}
+export type TerminalLogsQueryHookResult = ReturnType<typeof useTerminalLogsQuery>;
+export type TerminalLogsLazyQueryHookResult = ReturnType<typeof useTerminalLogsLazyQuery>;
+export type TerminalLogsSuspenseQueryHookResult = ReturnType<typeof useTerminalLogsSuspenseQuery>;
+export type TerminalLogsQueryResult = ApolloReactCommon.QueryResult<TerminalLogsQuery, TerminalLogsQueryVariables>;
+export const MessageLogsDocument = gql`
+    query messageLogs($flowId: ID!) {
+        messageLogs(flowId: $flowId) {
+            ...messageLogFragment
+        }
+    }
+    ${MessageLogFragmentFragmentDoc}
+`;
+
+/**
+ * __useMessageLogsQuery__
+ *
+ * To run a query within a React component, call `useMessageLogsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMessageLogsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMessageLogsQuery({
+ *   variables: {
+ *      flowId: // value for 'flowId'
+ *   },
+ * });
+ */
+export function useMessageLogsQuery(
+    baseOptions: ApolloReactHooks.QueryHookOptions<MessageLogsQuery, MessageLogsQueryVariables> &
+        ({ variables: MessageLogsQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useQuery<MessageLogsQuery, MessageLogsQueryVariables>(MessageLogsDocument, options);
+}
+export function useMessageLogsLazyQuery(
+    baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MessageLogsQuery, MessageLogsQueryVariables>,
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useLazyQuery<MessageLogsQuery, MessageLogsQueryVariables>(MessageLogsDocument, options);
+}
+// @ts-ignore
+export function useMessageLogsSuspenseQuery(
+    baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<MessageLogsQuery, MessageLogsQueryVariables>,
+): ApolloReactHooks.UseSuspenseQueryResult<MessageLogsQuery, MessageLogsQueryVariables>;
+export function useMessageLogsSuspenseQuery(
+    baseOptions?:
+        | ApolloReactHooks.SkipToken
+        | ApolloReactHooks.SuspenseQueryHookOptions<MessageLogsQuery, MessageLogsQueryVariables>,
+): ApolloReactHooks.UseSuspenseQueryResult<MessageLogsQuery | undefined, MessageLogsQueryVariables>;
+export function useMessageLogsSuspenseQuery(
+    baseOptions?:
+        | ApolloReactHooks.SkipToken
+        | ApolloReactHooks.SuspenseQueryHookOptions<MessageLogsQuery, MessageLogsQueryVariables>,
+) {
+    const options = baseOptions === ApolloReactHooks.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useSuspenseQuery<MessageLogsQuery, MessageLogsQueryVariables>(MessageLogsDocument, options);
+}
+export type MessageLogsQueryHookResult = ReturnType<typeof useMessageLogsQuery>;
+export type MessageLogsLazyQueryHookResult = ReturnType<typeof useMessageLogsLazyQuery>;
+export type MessageLogsSuspenseQueryHookResult = ReturnType<typeof useMessageLogsSuspenseQuery>;
+export type MessageLogsQueryResult = ApolloReactCommon.QueryResult<MessageLogsQuery, MessageLogsQueryVariables>;
+export const AgentLogsDocument = gql`
+    query agentLogs($flowId: ID!) {
+        agentLogs(flowId: $flowId) {
+            ...agentLogFragment
+        }
+    }
+    ${AgentLogFragmentFragmentDoc}
+`;
+
+/**
+ * __useAgentLogsQuery__
+ *
+ * To run a query within a React component, call `useAgentLogsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAgentLogsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAgentLogsQuery({
+ *   variables: {
+ *      flowId: // value for 'flowId'
+ *   },
+ * });
+ */
+export function useAgentLogsQuery(
+    baseOptions: ApolloReactHooks.QueryHookOptions<AgentLogsQuery, AgentLogsQueryVariables> &
+        ({ variables: AgentLogsQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useQuery<AgentLogsQuery, AgentLogsQueryVariables>(AgentLogsDocument, options);
+}
+export function useAgentLogsLazyQuery(
+    baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AgentLogsQuery, AgentLogsQueryVariables>,
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useLazyQuery<AgentLogsQuery, AgentLogsQueryVariables>(AgentLogsDocument, options);
+}
+// @ts-ignore
+export function useAgentLogsSuspenseQuery(
+    baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<AgentLogsQuery, AgentLogsQueryVariables>,
+): ApolloReactHooks.UseSuspenseQueryResult<AgentLogsQuery, AgentLogsQueryVariables>;
+export function useAgentLogsSuspenseQuery(
+    baseOptions?:
+        | ApolloReactHooks.SkipToken
+        | ApolloReactHooks.SuspenseQueryHookOptions<AgentLogsQuery, AgentLogsQueryVariables>,
+): ApolloReactHooks.UseSuspenseQueryResult<AgentLogsQuery | undefined, AgentLogsQueryVariables>;
+export function useAgentLogsSuspenseQuery(
+    baseOptions?:
+        | ApolloReactHooks.SkipToken
+        | ApolloReactHooks.SuspenseQueryHookOptions<AgentLogsQuery, AgentLogsQueryVariables>,
+) {
+    const options = baseOptions === ApolloReactHooks.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useSuspenseQuery<AgentLogsQuery, AgentLogsQueryVariables>(AgentLogsDocument, options);
+}
+export type AgentLogsQueryHookResult = ReturnType<typeof useAgentLogsQuery>;
+export type AgentLogsLazyQueryHookResult = ReturnType<typeof useAgentLogsLazyQuery>;
+export type AgentLogsSuspenseQueryHookResult = ReturnType<typeof useAgentLogsSuspenseQuery>;
+export type AgentLogsQueryResult = ApolloReactCommon.QueryResult<AgentLogsQuery, AgentLogsQueryVariables>;
+export const SearchLogsDocument = gql`
+    query searchLogs($flowId: ID!) {
+        searchLogs(flowId: $flowId) {
+            ...searchLogFragment
+        }
+    }
+    ${SearchLogFragmentFragmentDoc}
+`;
+
+/**
+ * __useSearchLogsQuery__
+ *
+ * To run a query within a React component, call `useSearchLogsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchLogsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchLogsQuery({
+ *   variables: {
+ *      flowId: // value for 'flowId'
+ *   },
+ * });
+ */
+export function useSearchLogsQuery(
+    baseOptions: ApolloReactHooks.QueryHookOptions<SearchLogsQuery, SearchLogsQueryVariables> &
+        ({ variables: SearchLogsQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useQuery<SearchLogsQuery, SearchLogsQueryVariables>(SearchLogsDocument, options);
+}
+export function useSearchLogsLazyQuery(
+    baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchLogsQuery, SearchLogsQueryVariables>,
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useLazyQuery<SearchLogsQuery, SearchLogsQueryVariables>(SearchLogsDocument, options);
+}
+// @ts-ignore
+export function useSearchLogsSuspenseQuery(
+    baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<SearchLogsQuery, SearchLogsQueryVariables>,
+): ApolloReactHooks.UseSuspenseQueryResult<SearchLogsQuery, SearchLogsQueryVariables>;
+export function useSearchLogsSuspenseQuery(
+    baseOptions?:
+        | ApolloReactHooks.SkipToken
+        | ApolloReactHooks.SuspenseQueryHookOptions<SearchLogsQuery, SearchLogsQueryVariables>,
+): ApolloReactHooks.UseSuspenseQueryResult<SearchLogsQuery | undefined, SearchLogsQueryVariables>;
+export function useSearchLogsSuspenseQuery(
+    baseOptions?:
+        | ApolloReactHooks.SkipToken
+        | ApolloReactHooks.SuspenseQueryHookOptions<SearchLogsQuery, SearchLogsQueryVariables>,
+) {
+    const options = baseOptions === ApolloReactHooks.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useSuspenseQuery<SearchLogsQuery, SearchLogsQueryVariables>(SearchLogsDocument, options);
+}
+export type SearchLogsQueryHookResult = ReturnType<typeof useSearchLogsQuery>;
+export type SearchLogsLazyQueryHookResult = ReturnType<typeof useSearchLogsLazyQuery>;
+export type SearchLogsSuspenseQueryHookResult = ReturnType<typeof useSearchLogsSuspenseQuery>;
+export type SearchLogsQueryResult = ApolloReactCommon.QueryResult<SearchLogsQuery, SearchLogsQueryVariables>;
+export const VectorStoreLogsDocument = gql`
+    query vectorStoreLogs($flowId: ID!) {
+        vectorStoreLogs(flowId: $flowId) {
+            ...vectorStoreLogFragment
+        }
+    }
+    ${VectorStoreLogFragmentFragmentDoc}
+`;
+
+/**
+ * __useVectorStoreLogsQuery__
+ *
+ * To run a query within a React component, call `useVectorStoreLogsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useVectorStoreLogsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useVectorStoreLogsQuery({
+ *   variables: {
+ *      flowId: // value for 'flowId'
+ *   },
+ * });
+ */
+export function useVectorStoreLogsQuery(
+    baseOptions: ApolloReactHooks.QueryHookOptions<VectorStoreLogsQuery, VectorStoreLogsQueryVariables> &
+        ({ variables: VectorStoreLogsQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useQuery<VectorStoreLogsQuery, VectorStoreLogsQueryVariables>(
+        VectorStoreLogsDocument,
+        options,
+    );
+}
+export function useVectorStoreLogsLazyQuery(
+    baseOptions?: ApolloReactHooks.LazyQueryHookOptions<VectorStoreLogsQuery, VectorStoreLogsQueryVariables>,
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useLazyQuery<VectorStoreLogsQuery, VectorStoreLogsQueryVariables>(
+        VectorStoreLogsDocument,
+        options,
+    );
+}
+// @ts-ignore
+export function useVectorStoreLogsSuspenseQuery(
+    baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<VectorStoreLogsQuery, VectorStoreLogsQueryVariables>,
+): ApolloReactHooks.UseSuspenseQueryResult<VectorStoreLogsQuery, VectorStoreLogsQueryVariables>;
+export function useVectorStoreLogsSuspenseQuery(
+    baseOptions?:
+        | ApolloReactHooks.SkipToken
+        | ApolloReactHooks.SuspenseQueryHookOptions<VectorStoreLogsQuery, VectorStoreLogsQueryVariables>,
+): ApolloReactHooks.UseSuspenseQueryResult<VectorStoreLogsQuery | undefined, VectorStoreLogsQueryVariables>;
+export function useVectorStoreLogsSuspenseQuery(
+    baseOptions?:
+        | ApolloReactHooks.SkipToken
+        | ApolloReactHooks.SuspenseQueryHookOptions<VectorStoreLogsQuery, VectorStoreLogsQueryVariables>,
+) {
+    const options = baseOptions === ApolloReactHooks.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+    return ApolloReactHooks.useSuspenseQuery<VectorStoreLogsQuery, VectorStoreLogsQueryVariables>(
+        VectorStoreLogsDocument,
+        options,
+    );
+}
+export type VectorStoreLogsQueryHookResult = ReturnType<typeof useVectorStoreLogsQuery>;
+export type VectorStoreLogsLazyQueryHookResult = ReturnType<typeof useVectorStoreLogsLazyQuery>;
+export type VectorStoreLogsSuspenseQueryHookResult = ReturnType<typeof useVectorStoreLogsSuspenseQuery>;
+export type VectorStoreLogsQueryResult = ApolloReactCommon.QueryResult<
+    VectorStoreLogsQuery,
+    VectorStoreLogsQueryVariables
+>;
 export const FlowFilesDocument = gql`
     query flowFiles($flowId: ID!) {
         flowFiles(flowId: $flowId) {

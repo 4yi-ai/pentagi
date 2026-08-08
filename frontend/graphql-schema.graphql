@@ -791,32 +791,47 @@ query flow($id: ID!) {
     flow(flowId: $id) {
         ...flowFragment
     }
-    tasks(flowId: $id) {
-        ...taskFragment
-    }
-    screenshots(flowId: $id) {
-        ...screenshotFragment
-    }
-    terminalLogs(flowId: $id) {
-        ...terminalLogFragment
-    }
-    messageLogs(flowId: $id) {
-        ...messageLogFragment
-    }
-    agentLogs(flowId: $id) {
-        ...agentLogFragment
-    }
-    searchLogs(flowId: $id) {
-        ...searchLogFragment
-    }
-    vectorStoreLogs(flowId: $id) {
-        ...vectorStoreLogFragment
-    }
 }
 
 query tasks($flowId: ID!) {
     tasks(flowId: $flowId) {
         ...taskFragment
+    }
+}
+
+query screenshots($flowId: ID!) {
+    screenshots(flowId: $flowId) {
+        ...screenshotFragment
+    }
+}
+
+query terminalLogs($flowId: ID!) {
+    terminalLogs(flowId: $flowId) {
+        ...terminalLogFragment
+    }
+}
+
+query messageLogs($flowId: ID!) {
+    messageLogs(flowId: $flowId) {
+        ...messageLogFragment
+    }
+}
+
+query agentLogs($flowId: ID!) {
+    agentLogs(flowId: $flowId) {
+        ...agentLogFragment
+    }
+}
+
+query searchLogs($flowId: ID!) {
+    searchLogs(flowId: $flowId) {
+        ...searchLogFragment
+    }
+}
+
+query vectorStoreLogs($flowId: ID!) {
+    vectorStoreLogs(flowId: $flowId) {
+        ...vectorStoreLogFragment
     }
 }
 

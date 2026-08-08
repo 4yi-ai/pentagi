@@ -3,12 +3,24 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import type { FlowFormValues } from '@/features/flows/flow-form';
-import type { AssistantFragmentFragment, AssistantLogFragmentFragment, FlowQuery } from '@/graphql/types';
+import type {
+    AgentLogsQuery,
+    AssistantFragmentFragment,
+    AssistantLogFragmentFragment,
+    FlowQuery,
+    MessageLogsQuery,
+    ScreenshotsQuery,
+    SearchLogsQuery,
+    TasksQuery,
+    TerminalLogsQuery,
+    VectorStoreLogsQuery,
+} from '@/graphql/types';
 
 import {
     ResultType,
     StatusType,
     useAgentLogAddedSubscription,
+    useAgentLogsQuery,
     useAssistantCreatedSubscription,
     useAssistantDeletedSubscription,
     useAssistantLogAddedSubscription,
@@ -22,16 +34,22 @@ import {
     useFlowQuery,
     useFlowUpdatedSubscription,
     useMessageLogAddedSubscription,
+    useMessageLogsQuery,
     useMessageLogUpdatedSubscription,
     usePutUserInputMutation,
     useScreenshotAddedSubscription,
+    useScreenshotsQuery,
     useSearchLogAddedSubscription,
+    useSearchLogsQuery,
     useStopAssistantMutation,
     useStopFlowMutation,
     useTaskCreatedSubscription,
+    useTasksQuery,
     useTaskUpdatedSubscription,
     useTerminalLogAddedSubscription,
+    useTerminalLogsQuery,
     useVectorStoreLogAddedSubscription,
+    useVectorStoreLogsQuery,
 } from '@/graphql/types';
 import { Log } from '@/lib/log';
 
@@ -40,7 +58,7 @@ interface FlowContextValue {
     assistants: Array<AssistantFragmentFragment>;
     createAssistant: (values: FlowFormValues) => Promise<void>;
     deleteAssistant: (assistantId: string) => Promise<void>;
-    flowData: FlowQuery | undefined;
+    flowData: FlowData | undefined;
     flowError: Error | undefined;
     flowId: null | string;
     flowStatus: StatusType | undefined;
@@ -55,6 +73,15 @@ interface FlowContextValue {
     submitAutomationMessage: (values: FlowFormValues) => Promise<void>;
 }
 
+type FlowData = AgentLogsQuery &
+    FlowQuery &
+    MessageLogsQuery &
+    ScreenshotsQuery &
+    SearchLogsQuery &
+    TasksQuery &
+    TerminalLogsQuery &
+    VectorStoreLogsQuery;
+
 const FlowContext = createContext<FlowContextValue | undefined>(undefined);
 
 interface FlowProviderProps {
@@ -67,7 +94,7 @@ export function FlowProvider({ children }: FlowProviderProps) {
     const [selectedAssistantIds, setSelectedAssistantIds] = useState<Record<string, null | string>>({});
 
     const {
-        data: flowData,
+        data: flowSummaryData,
         error: flowError,
         loading: isLoading,
     } = useFlowQuery({
@@ -78,6 +105,47 @@ export function FlowProvider({ children }: FlowProviderProps) {
         skip: !flowId,
         variables: { id: flowId ?? '' },
     });
+
+    const historyQueryOptions = {
+        errorPolicy: 'all' as const,
+        fetchPolicy: 'cache-first' as const,
+        nextFetchPolicy: 'cache-first' as const,
+        skip: !flowId,
+        variables: { flowId: flowId ?? '' },
+    };
+    const { data: tasksData, error: tasksError } = useTasksQuery(historyQueryOptions);
+    const { data: screenshotsData, error: screenshotsError } = useScreenshotsQuery(historyQueryOptions);
+    const { data: terminalLogsData, error: terminalLogsError } = useTerminalLogsQuery(historyQueryOptions);
+    const { data: messageLogsData, error: messageLogsError } = useMessageLogsQuery(historyQueryOptions);
+    const { data: agentLogsData, error: agentLogsError } = useAgentLogsQuery(historyQueryOptions);
+    const { data: searchLogsData, error: searchLogsError } = useSearchLogsQuery(historyQueryOptions);
+    const { data: vectorStoreLogsData, error: vectorStoreLogsError } = useVectorStoreLogsQuery(historyQueryOptions);
+
+    const flowData = useMemo<FlowData | undefined>(() => {
+        if (!flowSummaryData) {
+            return undefined;
+        }
+
+        return {
+            ...flowSummaryData,
+            agentLogs: agentLogsData?.agentLogs ?? [],
+            messageLogs: messageLogsData?.messageLogs ?? [],
+            screenshots: screenshotsData?.screenshots ?? [],
+            searchLogs: searchLogsData?.searchLogs ?? [],
+            tasks: tasksData?.tasks ?? [],
+            terminalLogs: terminalLogsData?.terminalLogs ?? [],
+            vectorStoreLogs: vectorStoreLogsData?.vectorStoreLogs ?? [],
+        };
+    }, [
+        agentLogsData,
+        flowSummaryData,
+        messageLogsData,
+        screenshotsData,
+        searchLogsData,
+        tasksData,
+        terminalLogsData,
+        vectorStoreLogsData,
+    ]);
 
     const { data: assistantsData, loading: isAssistantsLoading } = useAssistantsQuery({
         fetchPolicy: 'cache-first',
@@ -184,6 +252,38 @@ export function FlowProvider({ children }: FlowProviderProps) {
             Log.error('Error loading flow:', flowError);
         }
     }, [flowError]);
+
+    useEffect(() => {
+        const failedSections = [
+            ['tasks', tasksError],
+            ['screenshots', screenshotsError],
+            ['terminal logs', terminalLogsError],
+            ['message logs', messageLogsError],
+            ['agent logs', agentLogsError],
+            ['search logs', searchLogsError],
+            ['vector-store logs', vectorStoreLogsError],
+        ].filter((entry): entry is [string, Error] => entry[1] instanceof Error);
+
+        if (!failedSections.length) {
+            return;
+        }
+
+        const names = failedSections.map(([name]) => name).join(', ');
+        toast.warning('Some flow history could not be loaded', {
+            description: names,
+            id: `flow-history-load-error-${flowId ?? 'unknown'}`,
+        });
+        Log.error('Error loading flow history:', Object.fromEntries(failedSections));
+    }, [
+        agentLogsError,
+        flowId,
+        messageLogsError,
+        screenshotsError,
+        searchLogsError,
+        tasksError,
+        terminalLogsError,
+        vectorStoreLogsError,
+    ]);
 
     const submitAutomationMessage = useCallback(
         async (values: FlowFormValues) => {
