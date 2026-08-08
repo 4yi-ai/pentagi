@@ -57,6 +57,29 @@
             href="/fonts/inter-700.woff2"
             crossorigin="anonymous"
         />
+
+        <script>
+            window.addEventListener('vite:preloadError', (event) => {
+                const retryKey = 'pentagi:preload-retry-at';
+                const now = Date.now();
+                const lastRetry = Number.parseInt(sessionStorage.getItem(retryKey) || '0', 10);
+
+                // A resume or rolling deploy can briefly make a lazy chunk
+                // unavailable. Retry once, but let repeated failures reach the
+                // router error boundary instead of creating a reload loop.
+                if (now - lastRetry < 30_000) {
+                    return;
+                }
+
+                event.preventDefault();
+                sessionStorage.setItem(retryKey, String(now));
+
+                const retryUrl = new URL(window.location.href);
+
+                retryUrl.searchParams.set('_preload_retry', String(now));
+                window.location.replace(retryUrl);
+            });
+        </script>
     </head>
 
     <body class="bg-background font-sans antialiased">

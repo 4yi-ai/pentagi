@@ -323,6 +323,8 @@ func NewRouter(
 		setTokensGroup(privateGroup, tokenService)
 	}
 
+	router.Use(frontendCacheControlMiddleware())
+
 	if cfg.StaticURL != nil && cfg.StaticURL.Scheme != "" && cfg.StaticURL.Host != "" {
 		router.NoRoute(func() gin.HandlerFunc {
 			return func(c *gin.Context) {

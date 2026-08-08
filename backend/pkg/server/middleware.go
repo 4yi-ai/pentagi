@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"pentagi/pkg/config"
@@ -224,6 +225,27 @@ func noCacheMiddleware() gin.HandlerFunc {
 		c.Header("Cache-Control", "no-cache, no-store, must-revalidate") // HTTP 1.1
 		c.Header("Pragma", "no-cache")                                   // HTTP 1.0
 		c.Header("Expires", "0")                                         // prevents caching at the proxy server
+		c.Next()
+	}
+}
+
+func frontendCacheControlMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
+			c.Next()
+			return
+		}
+
+		requestPath := c.Request.URL.Path
+		switch {
+		case strings.HasPrefix(requestPath, "/assets/"):
+			c.Header("Cache-Control", "public, max-age=31536000, immutable")
+		case !strings.HasPrefix(requestPath, baseURL):
+			// Vite entry HTML must be revalidated so it never references chunks
+			// removed by a newer image after a resume or rolling deployment.
+			c.Header("Cache-Control", "no-cache")
+		}
+
 		c.Next()
 	}
 }
