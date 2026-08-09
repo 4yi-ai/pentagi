@@ -14,6 +14,7 @@
         "SERVER_HOST": "0.0.0.0",
         "SERVER_PORT": "8443",
         "SERVER_USE_SSL": "false",
+        "DATA_DIR": "/opt/pentagi/data",
         "EXECUTION_BACKEND": "executor",
         "EXECUTOR_URL": "http://pentagi-kali-executor:8022",
         "EXECUTOR_DEFAULT_IMAGE": "vxcontrol/kali-linux:latest",
@@ -21,6 +22,7 @@
         "AUTH_AUTO_LOGIN": "true",
         "AUTH_AUTO_LOGIN_EMAIL": "admin@pentagi.com"
       },
+      "storage": { "sizeGb": 10, "mountPath": "/opt/pentagi/data", "fsGroup": 10001 },
       "resources": { "cpu": 1, "memoryMb": 6144 }
     },
     {

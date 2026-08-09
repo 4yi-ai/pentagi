@@ -70,7 +70,9 @@ services:
     route: public
     healthPath: /healthz
     resources: { cpu: 1, memoryMb: 2048, replicas: { min: 1, max: 1 } }
+    storage: { sizeGb: 10, mountPath: /opt/pentagi/data, fsGroup: 10001 }
     env:
+      DATA_DIR: "/opt/pentagi/data"
       EXECUTION_BACKEND: "executor"
       EXECUTOR_URL: "http://kali-executor:8022"
       LLM_SERVER_URL: "https://<gateway>/api/v1"
@@ -112,6 +114,10 @@ services:
 
 Constraint check: exactly one `route: public` (pentagi); pgvector is a managed
 `postgres` service (allowed for `dedicated_app`, not a bundled compose datastore).
+
+The web-service volume is required because PentAGI stores uploaded resources and
+flow caches under `DATA_DIR`. Without it, database rows survive a pod replacement
+but their corresponding files disappear from the web pod.
 
 ## Open items before a real deploy
 
