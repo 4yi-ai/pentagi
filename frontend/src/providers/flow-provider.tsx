@@ -55,6 +55,7 @@ import { Log } from '@/lib/log';
 
 interface FlowContextValue {
     assistantLogs: Array<AssistantLogFragmentFragment>;
+    assistantLogsError: Error | undefined;
     assistants: Array<AssistantFragmentFragment>;
     createAssistant: (values: FlowFormValues) => Promise<void>;
     deleteAssistant: (assistantId: string) => Promise<void>;
@@ -63,8 +64,10 @@ interface FlowContextValue {
     flowId: null | string;
     flowStatus: StatusType | undefined;
     initiateAssistantCreation: () => void;
+    isAssistantLogsLoading: boolean;
     isAssistantsLoading: boolean;
     isLoading: boolean;
+    retryAssistantLogs: () => Promise<void>;
     selectAssistant: (assistantId: null | string) => void;
     selectedAssistantId: null | string;
     stopAssistant: (assistantId: string) => Promise<void>;
@@ -176,12 +179,21 @@ export function FlowProvider({ children }: FlowProviderProps) {
         return assistants?.[0]?.id ?? null;
     }, [flowId, selectedAssistantIds, assistants]);
 
-    const { data: assistantLogsData } = useAssistantLogsQuery({
+    const {
+        data: assistantLogsData,
+        error: assistantLogsError,
+        loading: isAssistantLogsLoading,
+        refetch: refetchAssistantLogs,
+    } = useAssistantLogsQuery({
         fetchPolicy: 'cache-first',
         nextFetchPolicy: 'cache-first',
         skip: !flowId || !selectedAssistantId || selectedAssistantId === '',
         variables: { assistantId: selectedAssistantId ?? '', flowId: flowId ?? '' },
     });
+
+    const retryAssistantLogs = useCallback(async () => {
+        await refetchAssistantLogs();
+    }, [refetchAssistantLogs]);
 
     // Skip subscriptions until the initial flow query has loaded so cache fields exist
     // before subscription deltas arrive.
@@ -255,6 +267,7 @@ export function FlowProvider({ children }: FlowProviderProps) {
 
     useEffect(() => {
         const failedSections = [
+            ['assistant messages', assistantLogsError],
             ['tasks', tasksError],
             ['screenshots', screenshotsError],
             ['terminal logs', terminalLogsError],
@@ -276,6 +289,7 @@ export function FlowProvider({ children }: FlowProviderProps) {
         Log.error('Error loading flow history:', Object.fromEntries(failedSections));
     }, [
         agentLogsError,
+        assistantLogsError,
         flowId,
         messageLogsError,
         screenshotsError,
@@ -469,6 +483,7 @@ export function FlowProvider({ children }: FlowProviderProps) {
     const value = useMemo(
         () => ({
             assistantLogs: assistantLogsData?.assistantLogs ?? [],
+            assistantLogsError,
             assistants,
             createAssistant,
             deleteAssistant,
@@ -477,8 +492,10 @@ export function FlowProvider({ children }: FlowProviderProps) {
             flowId: flowId ?? null,
             flowStatus,
             initiateAssistantCreation,
+            isAssistantLogsLoading,
             isAssistantsLoading,
             isLoading,
+            retryAssistantLogs,
             selectAssistant,
             selectedAssistantId,
             stopAssistant,
@@ -488,6 +505,7 @@ export function FlowProvider({ children }: FlowProviderProps) {
         }),
         [
             assistantLogsData?.assistantLogs,
+            assistantLogsError,
             assistants,
             createAssistant,
             deleteAssistant,
@@ -496,8 +514,10 @@ export function FlowProvider({ children }: FlowProviderProps) {
             flowId,
             flowStatus,
             initiateAssistantCreation,
+            isAssistantLogsLoading,
             isAssistantsLoading,
             isLoading,
+            retryAssistantLogs,
             selectAssistant,
             selectedAssistantId,
             stopAssistant,

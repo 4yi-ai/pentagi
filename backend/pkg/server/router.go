@@ -239,6 +239,7 @@ func NewRouter(
 		router.Use(cors.New(config))
 	}
 
+	router.Use(responseCompressionMiddleware())
 	router.Use(gin.Recovery())
 	router.Use(logger.WithGinLogger("pentagi-api"))
 

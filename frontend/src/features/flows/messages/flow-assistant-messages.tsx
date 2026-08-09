@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import debounce from 'lodash/debounce';
-import { Check, ChevronDown, ListFilter, Loader2, Plus, Search, Trash2, X } from 'lucide-react';
+import { Check, ChevronDown, ListFilter, Loader2, Plus, Search, Trash2, TriangleAlert, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -285,12 +285,15 @@ function FlowAssistantMessages({ className }: FlowAssistantMessagesProps) {
 
     const {
         assistantLogs: logs,
+        assistantLogsError,
         assistants,
         createAssistant,
         deleteAssistant,
         flowId,
         flowStatus,
         initiateAssistantCreation,
+        isAssistantLogsLoading,
+        retryAssistantLogs,
         selectAssistant,
         selectedAssistantId,
         stopAssistant,
@@ -556,15 +559,36 @@ function FlowAssistantMessages({ className }: FlowAssistantMessagesProps) {
                 </div>
             </div>
 
-            {isAssistantCreating ? (
+            {isAssistantCreating || (selectedAssistantId && isAssistantLogsLoading) ? (
                 <Empty>
                     <EmptyHeader>
                         <EmptyMedia variant="icon">
                             <Loader2 className="animate-spin" />
                         </EmptyMedia>
-                        <EmptyTitle>{t('flowDetail.creatingAssistant')}</EmptyTitle>
-                        <EmptyDescription>{t('flowDetail.creatingAssistantDescription')}</EmptyDescription>
+                        <EmptyTitle>
+                            {isAssistantCreating
+                                ? t('flowDetail.creatingAssistant')
+                                : t('flowDetail.loadingMessages')}
+                        </EmptyTitle>
+                        <EmptyDescription>
+                            {isAssistantCreating
+                                ? t('flowDetail.creatingAssistantDescription')
+                                : t('flowDetail.loadingMessagesDescription')}
+                        </EmptyDescription>
                     </EmptyHeader>
+                </Empty>
+            ) : selectedAssistantId && assistantLogsError ? (
+                <Empty>
+                    <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                            <TriangleAlert />
+                        </EmptyMedia>
+                        <EmptyTitle>{t('flowDetail.messagesLoadFailed')}</EmptyTitle>
+                        <EmptyDescription>{t('flowDetail.messagesLoadFailedDescription')}</EmptyDescription>
+                    </EmptyHeader>
+                    <EmptyContent>
+                        <Button onClick={() => void retryAssistantLogs()}>{t('flowDetail.retry')}</Button>
+                    </EmptyContent>
                 </Empty>
             ) : selectedAssistantId ? (
                 filteredLogs.length > 0 ? (

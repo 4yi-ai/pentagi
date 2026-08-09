@@ -24,6 +24,7 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.17.0
 	github.com/gin-contrib/cors v1.7.2
+	github.com/gin-contrib/gzip v0.0.1
 	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-contrib/static v1.1.1
 	github.com/gin-gonic/gin v1.10.0

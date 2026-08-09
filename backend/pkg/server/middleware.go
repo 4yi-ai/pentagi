@@ -11,10 +11,15 @@ import (
 	"pentagi/pkg/server/rdb"
 	"pentagi/pkg/server/response"
 
+	gingzip "github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
+
+func responseCompressionMiddleware() gin.HandlerFunc {
+	return gingzip.Gzip(gingzip.DefaultCompression)
+}
 
 func localUserRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
