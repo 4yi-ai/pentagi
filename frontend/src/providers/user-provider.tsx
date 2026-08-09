@@ -63,7 +63,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
             try {
                 const info = await api.get<AuthInfo>('/info');
 
-                if (cancelled) return;
+                if (cancelled) {
+                    return;
+                }
 
                 // Seamless no-login (AUTH_AUTO_LOGIN) deployment still cold-starting:
                 // the server answers but returns a guest because the admin session
@@ -90,7 +92,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 setBackendUnreachable(false);
                 setIsLoading(false);
             } catch (err) {
-                if (cancelled) return;
+                if (cancelled) {
+                    return;
+                }
 
                 const status = getApiErrorStatusCode(err);
                 // undefined = network error; >=500 = gateway/router down; 404 = pod
@@ -122,12 +126,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
                     if (parsedAuthInfo) {
                         setAuthInfo(parsedAuthInfo);
 
-                        // Non-guests are trusted from cache; guests still refresh /info
-                        // to pick up the updated OAuth providers list.
+                        // Cached users can render immediately, but must still probe
+                        // /info. Otherwise a cold-start failure in the route refresh
+                        // leaves the startup screen stuck until navigation happens.
                         if (parsedAuthInfo.type !== 'guest') {
                             setIsLoading(false);
-
-                            return;
                         }
                     }
                 }
