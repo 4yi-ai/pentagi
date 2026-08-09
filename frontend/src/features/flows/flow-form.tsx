@@ -16,7 +16,6 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { z } from 'zod';
 
 import type { UserResourceFragmentFragment } from '@/graphql/types';
 
@@ -43,18 +42,15 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useResourcesUpload } from '@/features/resources/use-resources-upload';
+import { useT } from '@/lib/i18n';
 import { getProviderDisplayName } from '@/models/provider';
 import { useProviders } from '@/providers/providers-provider';
 import { useResources } from '@/providers/resources-provider';
 import { type Template, useTemplates } from '@/providers/templates-provider';
-import { useT } from '@/lib/i18n';
 
-const formSchema = z.object({
-    message: z.string().trim().min(1, { message: 'Message cannot be empty' }),
-    providerName: z.string().trim().min(1, { message: 'Provider must be selected' }),
-    resourceIds: z.array(z.string()),
-    useAgents: z.boolean(),
-});
+import { flowFormSchema, type FlowFormValues } from './flow-form-schema';
+
+export type { FlowFormValues } from './flow-form-schema';
 
 export interface FlowFormProps {
     defaultValues?: Partial<FlowFormValues>;
@@ -68,8 +64,6 @@ export interface FlowFormProps {
     placeholder?: string;
     type: 'assistant' | 'automation';
 }
-
-export type FlowFormValues = z.infer<typeof formSchema>;
 
 export function FlowForm({
     defaultValues,
@@ -160,7 +154,7 @@ export function FlowForm({
             useAgents: defaultValues?.useAgents ?? false,
         },
         mode: 'onChange',
-        resolver: zodResolver(formSchema),
+        resolver: zodResolver(flowFormSchema),
     });
 
     const {

@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import type { FlowFormValues } from '@/features/flows/flow-form';
 import type {
     AgentLogsQuery,
     AssistantFragmentFragment,
@@ -16,6 +15,7 @@ import type {
     VectorStoreLogsQuery,
 } from '@/graphql/types';
 
+import { type FlowFormValues, getFlowFormInput } from '@/features/flows/flow-form-schema';
 import {
     ResultType,
     StatusType,
@@ -305,7 +305,8 @@ export function FlowProvider({ children }: FlowProviderProps) {
                 return;
             }
 
-            const { message: input, providerName, resourceIds } = values;
+            const { providerName, resourceIds } = values;
+            const input = getFlowFormInput(values);
 
             try {
                 await putUserInput({
@@ -352,7 +353,7 @@ export function FlowProvider({ children }: FlowProviderProps) {
         async (values: FlowFormValues) => {
             const { message, providerName, resourceIds, useAgents } = values;
 
-            const input = message.trim();
+            const input = getFlowFormInput({ message, resourceIds });
             const modelProvider = providerName.trim();
 
             if (!input || !modelProvider || !flowId) {
@@ -393,7 +394,7 @@ export function FlowProvider({ children }: FlowProviderProps) {
         async (assistantId: string, values: FlowFormValues) => {
             const { message, resourceIds, useAgents } = values;
 
-            const input = message.trim();
+            const input = getFlowFormInput({ message, resourceIds });
 
             if (!flowId || !assistantId || !input) {
                 return;
