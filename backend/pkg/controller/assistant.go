@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -95,6 +98,7 @@ const assistantInputTimeout = 2 * time.Second
 type assistantInput struct {
 	input     string
 	useAgents bool
+	resources []database.UserResource
 	done      chan error
 }
 
@@ -445,7 +449,9 @@ func LoadAssistantWorker(
 func (aw *assistantWorker) worker() {
 	defer aw.wg.Done()
 
-	perform := func(ctx context.Context, input string, useAgents bool) error {
+	perform := func(
+		ctx context.Context, input string, useAgents bool, resources []database.UserResource,
+	) error {
 		aw.runWG.Add(1)
 		defer aw.runWG.Done()
 
@@ -467,7 +473,9 @@ func (aw *assistantWorker) worker() {
 			}
 		}()
 
-		_, err = aw.aslw.PutFlowAssistantMsg(ctx, database.MsglogTypeInput, "", input)
+		_, err = aw.aslw.PutFlowAssistantMsg(
+			ctx, database.MsglogTypeInput, "", formatAssistantInputLog(input, resources),
+		)
 		if err != nil {
 			return fmt.Errorf("failed to put input to flow assistant log: %w", err)
 		}
@@ -476,7 +484,7 @@ func (aw *assistantWorker) worker() {
 		ctx, aw.runST = context.WithCancel(aw.ctx)
 		aw.runMX.Unlock()
 
-		if err := aw.ap.PutInputToAgentChain(ctx, input); err != nil {
+		if err := aw.ap.PutInputToAgentChain(ctx, input, resources); err != nil {
 			return fmt.Errorf("failed to put input to agent chain: %w", err)
 		}
 
@@ -499,7 +507,7 @@ func (aw *assistantWorker) worker() {
 		case <-aw.ctx.Done():
 			return
 		case ain := <-aw.input:
-			err := perform(aw.ctx, ain.input, ain.useAgents)
+			err := perform(aw.ctx, ain.input, ain.useAgents, ain.resources)
 			if err != nil {
 				aw.logger.WithError(err).Error("failed to perform assistant chain")
 			}
@@ -557,7 +565,9 @@ func (aw *assistantWorker) PutInput(ctx context.Context, input string, useAgents
 		}
 	}
 
-	ain := assistantInput{input: input, useAgents: useAgents, done: make(chan error, 1)}
+	ain := assistantInput{
+		input: input, useAgents: useAgents, resources: resources, done: make(chan error, 1),
+	}
 	select {
 	case <-aw.ctx.Done():
 		close(ain.done)
@@ -579,6 +589,37 @@ func (aw *assistantWorker) PutInput(ctx context.Context, input string, useAgents
 		case <-ctx.Done():
 			return fmt.Errorf("assistant %d flow %d input processing timeout: %w", aw.id, aw.flowID, ctx.Err())
 		}
+	}
+}
+
+func formatAssistantInputLog(input string, resources []database.UserResource) string {
+	parts := make([]string, 0, len(resources)+1)
+	if trimmedInput := strings.TrimSpace(input); trimmedInput != "" {
+		parts = append(parts, trimmedInput)
+	}
+
+	for _, resource := range resources {
+		if resource.IsDir || !isAssistantImagePath(resource.Name) {
+			continue
+		}
+		query := url.Values{}
+		query.Set("inline", "true")
+		query.Add("paths[]", resource.Path)
+		parts = append(parts, fmt.Sprintf(
+			"![Attached image: %s](/api/v1/resources/download?%s)",
+			strings.ReplaceAll(resource.Name, "]", "\\]"), query.Encode(),
+		))
+	}
+
+	return strings.Join(parts, "\n\n")
+}
+
+func isAssistantImagePath(name string) bool {
+	switch strings.ToLower(filepath.Ext(name)) {
+	case ".gif", ".jpeg", ".jpg", ".png", ".webp":
+		return true
+	default:
+		return false
 	}
 }
 

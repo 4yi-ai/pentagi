@@ -38,7 +38,7 @@ type AssistantProvider interface {
 
 	PrepareAgentChain(ctx context.Context) (int64, error)
 	PerformAgentChain(ctx context.Context) error
-	PutInputToAgentChain(ctx context.Context, input string) error
+	PutInputToAgentChain(ctx context.Context, input string, resources []database.UserResource) error
 	EnsureChainConsistency(ctx context.Context) error
 }
 
@@ -239,7 +239,9 @@ func (ap *assistantProvider) PerformAgentChain(ctx context.Context) error {
 	return nil
 }
 
-func (ap *assistantProvider) PutInputToAgentChain(ctx context.Context, input string) error {
+func (ap *assistantProvider) PutInputToAgentChain(
+	ctx context.Context, input string, resources []database.UserResource,
+) error {
 	ctx, span := obs.Observer.NewSpan(ctx, obs.SpanKindInternal, "providers.assistantProvider.PutInputToAgentChain")
 	defer span.End()
 
@@ -253,7 +255,7 @@ func (ap *assistantProvider) PutInputToAgentChain(ctx context.Context, input str
 
 	return ap.fp.processChain(ctx, pconfig.OptionsTypeAssistant, ap.msgChainID, logger,
 		func(chain []llms.MessageContent) ([]llms.MessageContent, error) {
-			return ap.updateAssistantChain(ctx, chain, input)
+			return ap.updateAssistantChain(ctx, chain, input, resources)
 		},
 	)
 }
@@ -277,17 +279,22 @@ func (ap *assistantProvider) EnsureChainConsistency(ctx context.Context) error {
 }
 
 func (ap *assistantProvider) updateAssistantChain(
-	ctx context.Context, chain []llms.MessageContent, humanPrompt string,
+	ctx context.Context, chain []llms.MessageContent, humanPrompt string, resources []database.UserResource,
 ) ([]llms.MessageContent, error) {
 	systemPrompt, err := ap.getAssistantSystemPrompt(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get assistant system prompt: %w", err)
 	}
 
+	humanMessage, err := buildAssistantHumanMessage(ap.fp.dataDir, humanPrompt, resources)
+	if err != nil {
+		return nil, err
+	}
+
 	if len(chain) == 0 {
 		return []llms.MessageContent{
 			llms.TextParts(llms.ChatMessageTypeSystem, systemPrompt),
-			llms.TextParts(llms.ChatMessageTypeHuman, humanPrompt),
+			humanMessage,
 		}, nil
 	}
 
@@ -300,6 +307,17 @@ func (ap *assistantProvider) updateAssistantChain(
 	ast.Sections[0].Header.SystemMessage = &systemMessage
 
 	ast.AppendHumanMessage(humanPrompt)
+	if len(humanMessage.Parts) > 1 {
+		lastSection := ast.Sections[len(ast.Sections)-1]
+		lastSection.Header.HumanMessage.Parts = append(
+			lastSection.Header.HumanMessage.Parts,
+			humanMessage.Parts[1:]...,
+		)
+		lastSection.SetHeader(cast.NewHeader(
+			lastSection.Header.SystemMessage,
+			lastSection.Header.HumanMessage,
+		))
+	}
 
 	return ast.Messages(), nil
 }

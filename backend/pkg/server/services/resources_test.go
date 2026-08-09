@@ -1071,6 +1071,20 @@ func TestResourceService_DownloadResourceScenarios(t *testing.T) {
 			wantDispContains: "report.txt",
 		},
 		{
+			name: "inline image uses its detected content type",
+			seeds: []seed{{
+				path: "screen.png",
+				content: string([]byte{
+					0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0, 0, 0, 0,
+				}),
+			}},
+			rawQuery:         "path=screen.png&inline=true",
+			privs:            []string{"resources.download"},
+			wantStatus:       http.StatusOK,
+			wantContentType:  "image/png",
+			wantDispContains: "inline",
+		},
+		{
 			name:             "admin can download other user's file",
 			seeds:            []seed{{userID: 2, path: "report.txt", content: "alien"}},
 			path:             "report.txt",

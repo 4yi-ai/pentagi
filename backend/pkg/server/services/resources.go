@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"mime"
 	"net/http"
 	"os"
@@ -1894,9 +1895,30 @@ func (s *ResourceService) DownloadResource(c *gin.Context) {
 			response.Error(c, response.ErrInternal, err)
 			return
 		}
-		c.DataFromReader(http.StatusOK, info.Size(), "application/octet-stream", f,
+		contentType := "application/octet-stream"
+		disposition := "attachment"
+		if c.Query("inline") == "true" {
+			header := make([]byte, 512)
+			n, readErr := f.Read(header)
+			if readErr != nil && !errors.Is(readErr, io.EOF) {
+				logger.FromContext(c).WithError(readErr).Error("error reading resource blob header")
+				response.Error(c, response.ErrInternal, readErr)
+				return
+			}
+			if _, err := f.Seek(0, io.SeekStart); err != nil {
+				logger.FromContext(c).WithError(err).Error("error rewinding resource blob")
+				response.Error(c, response.ErrInternal, err)
+				return
+			}
+			detectedType := http.DetectContentType(header[:n])
+			if strings.HasPrefix(detectedType, "image/") {
+				contentType = detectedType
+				disposition = "inline"
+			}
+		}
+		c.DataFromReader(http.StatusOK, info.Size(), contentType, f,
 			map[string]string{
-				"Content-Disposition": mime.FormatMediaType("attachment", map[string]string{
+				"Content-Disposition": mime.FormatMediaType(disposition, map[string]string{
 					"filename": e.rec.Name,
 				}),
 			})
