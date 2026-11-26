@@ -310,6 +310,21 @@ func NewProviderController(
 		}
 
 		providers[provider.DefaultProviderNameCustom] = p
+
+		// Marketplace instances use LLM_SERVER_* rather than OPEN_AI_*.
+		for _, modelName := range []string{"qwen3.8-max", "deepseek.v3.2"} {
+			modelCfg := *cfg
+			modelCfg.LLMServerModel = modelName
+			modelConfig, err := custom.BuildProviderConfig(&modelCfg, []byte(pconfig.EmptyProviderConfigRaw))
+			if err != nil {
+				return nil, fmt.Errorf("failed to configure %s: %w", modelName, err)
+			}
+			modelProvider, err := custom.New(&modelCfg, provider.ProviderName(modelName), modelConfig)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create %s provider: %w", modelName, err)
+			}
+			providers[provider.ProviderName(modelName)] = modelProvider
+		}
 	}
 
 	if cfg.DeepSeekAPIKey != "" {
