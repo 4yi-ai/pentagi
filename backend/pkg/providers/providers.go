@@ -246,19 +246,21 @@ func NewProviderController(
 		// Expose the gateway's Qwen model as a separate selectable provider.
 		// The official OpenAI endpoint does not serve Qwen models.
 		if cfg.OpenAIServerURL != "" && strings.TrimRight(cfg.OpenAIServerURL, "/") != "https://api.openai.com/v1" {
-			var modelConfig strings.Builder
-			for _, agentType := range pconfig.AllAgentTypes {
-				fmt.Fprintf(&modelConfig, "%s:\n  model: qwen3.8-max\n  n: 1\n  max_tokens: 4000\n", agentType)
+			for _, modelName := range []string{"qwen3.8-max", "deepseek.v3.2"} {
+				var modelConfig strings.Builder
+				for _, agentType := range pconfig.AllAgentTypes {
+					fmt.Fprintf(&modelConfig, "%s:\n  model: %s\n  n: 1\n  max_tokens: 4000\n", agentType, modelName)
+				}
+				modelProviderConfig, err := openai.BuildProviderConfig([]byte(modelConfig.String()))
+				if err != nil {
+					return nil, fmt.Errorf("failed to configure %s: %w", modelName, err)
+				}
+				modelProvider, err := openai.New(cfg, provider.ProviderName(modelName), modelProviderConfig)
+				if err != nil {
+					return nil, fmt.Errorf("failed to create %s provider: %w", modelName, err)
+				}
+				providers[provider.ProviderName(modelName)] = modelProvider
 			}
-			qwenConfig, err := openai.BuildProviderConfig([]byte(modelConfig.String()))
-			if err != nil {
-				return nil, fmt.Errorf("failed to configure qwen3.8-max: %w", err)
-			}
-			qwenProvider, err := openai.New(cfg, provider.ProviderName("qwen3.8-max"), qwenConfig)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create qwen3.8-max provider: %w", err)
-			}
-			providers[provider.ProviderName("qwen3.8-max")] = qwenProvider
 		}
 	}
 
@@ -825,7 +827,7 @@ func (pc *providerController) GetProvider(
 
 	// Fall back to built-in default providers
 	switch prvname {
-	case provider.ProviderName("qwen3.8-max"):
+	case provider.ProviderName("qwen3.8-max"), provider.ProviderName("deepseek.v3.2"):
 		return pc.Providers.Get(prvname)
 	case provider.DefaultProviderNameOpenAI:
 		return pc.Providers.Get(provider.DefaultProviderNameOpenAI)
