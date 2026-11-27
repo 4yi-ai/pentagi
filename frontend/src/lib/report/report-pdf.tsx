@@ -33,7 +33,9 @@ Font.register({
 });
 
 // Disable word hyphenation (breaks CJK and Cyrillic incorrectly)
-Font.registerHyphenationCallback((word) => [word]);
+Font.registerHyphenationCallback((word) =>
+    /[\u3400-\u9FFF\uF900-\uFAFF]/.test(word) || word.length > 40 ? Array.from(word) : [word],
+);
 
 // Regex that matches any CJK unified ideographs or CJK punctuation/fullwidth chars
 const CJK_RE = /[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u3000-\u303F\uFF01-\uFF60\uFFE0-\uFFE6]+/g;
@@ -179,8 +181,10 @@ const pdfStyles = StyleSheet.create({
     page: {
         backgroundColor: '#ffffff',
         color: '#334155',
-        fontFamily: 'NotoSans',
+        fontFamily: 'NotoSansSC',
         fontSize: 10,
+        textAlign: 'left',
+        letterSpacing: 0,
         lineHeight: 1.5,
         padding: 40,
     },
@@ -424,7 +428,7 @@ const renderTextWithCJK = (
     }
 
     return segments.map((seg, idx) => {
-        const family = seg.isCJK ? (bold ? 'NotoSansSC' : 'NotoSansSC') : bold ? boldFamily : baseFamily;
+        const family = seg.isCJK ? 'NotoSansSC' : bold ? boldFamily : baseFamily;
         const style: Record<string, string> = { fontFamily: family };
 
         if (bold && !seg.isCJK) {
@@ -473,7 +477,7 @@ const renderInlineTokens = (tokens: InlineToken[], keyPrefix: string) => {
             const isItalic = !!token.italic;
             const isCode = !!token.code;
             const rendered = isCode
-                ? textContent
+                ? renderTextWithCJK(textContent, 'NotoSansMono', 'NotoSansMono', `${keyPrefix}-code-${idx}`)
                 : renderTextWithCJK(
                       textContent,
                       'NotoSans',
@@ -517,7 +521,7 @@ const renderPDFContent = (parsed: ParsedContent[]) => {
                             key={`code-${index}`}
                             style={pdfStyles.codeBlock}
                         >
-                            {item.content}
+                            {renderTextWithCJK(item.content, 'NotoSansMono', 'NotoSansMono', `code-${index}`)}
                         </Text>
                     );
                 }
@@ -633,7 +637,7 @@ export const generatePDFFromMarkdownNew = async (content: string, fileName: stri
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${fileName}.pdf`;
+        link.download = fileName.toLowerCase().endsWith('.pdf') ? fileName : `${fileName}.pdf`;
         link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
