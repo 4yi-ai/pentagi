@@ -227,6 +227,26 @@ export const generateReportWithEvidence = async (
             )
             .replace(/([\w.+-]+@[\w.-]+\.[a-z]{2,}\s*\n)[^\s\n]+/gi, '$1[REDACTED]');
     let report = redact(generateReport(tasks, flow));
+    try {
+        const [{ client }, { TerminalLogsDocument }] = await Promise.all([
+            import('@/lib/apollo'),
+            import('@/graphql/types'),
+        ]);
+        const { data } = await client.query({
+            query: TerminalLogsDocument,
+            variables: { flowId: flow.id },
+            fetchPolicy: 'network-only',
+        });
+        report +=
+            '\n\n# 实际执行记录\n\n以下为系统保存的终端输入与输出。命令存在不等于请求成功；需结合输出中的请求、响应和业务结果判断。\n';
+        for (const log of data?.terminalLogs || []) {
+            const text = redact(log.text);
+            const fence = '`'.repeat(Math.max(3, ...(text.match(/`+/g) || []).map((value) => value.length + 1)));
+            report += `\n## 记录 ${log.id} · ${log.type} · 任务 ${log.taskId ?? '-'} / 子任务 ${log.subtaskId ?? '-'}\n\n${fence}text\n${text}\n${fence}\n`;
+        }
+    } catch {
+        report += '\n\n实际执行记录读取失败，本次导出缺少终端证据。\n';
+    }
     const paths = [...new Set(report.match(/\/work\/[a-zA-Z0-9_./-]+\.(?:md|json|txt|csv|log|har)\b/g) || [])];
     if (!paths.length) return report;
     report += '\n\n# 测试过程与证据附件\n\n以下为实际读取的证据文件；文件中的结论仍需结合请求、响应及业务结果核验。\n';
