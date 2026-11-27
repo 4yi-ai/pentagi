@@ -16,6 +16,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import type { UserResourceFragmentFragment } from '@/graphql/types';
 
@@ -159,7 +160,7 @@ export function FlowForm({
 
     const {
         control,
-        formState: { dirtyFields, isValid },
+        formState: { dirtyFields },
         getValues,
         handleSubmit: handleFormSubmit,
         resetField,
@@ -237,7 +238,7 @@ export function FlowForm({
             })
             .forEach(([fieldName, defaultValue]) => {
                 const typedFieldName = fieldName as keyof FlowFormValues;
-                setValue(typedFieldName, defaultValue as never, { shouldDirty: false });
+                setValue(typedFieldName, defaultValue as never, { shouldDirty: false, shouldValidate: true });
             });
     }, [defaultValues, dirtyFields, setValue, getValues]);
 
@@ -479,7 +480,17 @@ export function FlowForm({
 
     return (
         <Form {...form}>
-            <form onSubmit={handleFormSubmit(handleSubmit)}>
+            <form
+                onSubmit={handleFormSubmit(handleSubmit, (errors) => {
+                    toast.error('无法发送消息', {
+                        description:
+                            errors.providerName?.message ||
+                            errors.message?.message ||
+                            errors.resourceIds?.message ||
+                            '请检查模型和附件后重试',
+                    });
+                })}
+            >
                 <FormField
                     control={control}
                     name="message"
@@ -759,7 +770,7 @@ export function FlowForm({
                                         <InputGroupButton
                                             aria-label={isSubmitting ? 'Submitting…' : 'Submit'}
                                             className="shrink-0"
-                                            disabled={isSubmitting || !isValid || upload.isUploading}
+                                            disabled={isFormDisabled || upload.isUploading}
                                             size="icon-xs"
                                             type="submit"
                                             variant="default"
