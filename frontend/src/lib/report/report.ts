@@ -245,7 +245,9 @@ export const generateReportWithEvidence = async (
                 .replace(/((?:authorization|cookie|set-cookie|x-api-key)\s*:\s*)[^\r\n]+/gi, '$1[REDACTED]')
                 .replace(/("(?:password|access_token|refresh_token|api_key|secret)"\s*:\s*")[^"]*/gi, '$1[REDACTED]');
             const fence = '`'.repeat(Math.max(3, ...(content.match(/`+/g) || []).map((value) => value.length + 1)));
-            report += `\n## ${path}\n\n${fence}text\n${content}\n${fence}\n`;
+            report += path.endsWith('.md')
+                ? `\n## ${path}\n\n${shiftMarkdownHeaders(content, 2)}\n`
+                : `\n## ${path}\n\n${fence}text\n${content}\n${fence}\n`;
         } catch {
             report += `\n## ${path}\n\n证据文件未能读取：可能不存在、容器已停止或当前账号无权限。本项不构成已验证证据。\n`;
         }

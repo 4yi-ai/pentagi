@@ -126,3 +126,10 @@ When evaluating whether file-related subtasks were completed correctly, account 
 {{end}}
 
 {{.ToolPlaceholder}}
+
+
+## REPRODUCIBLE TEST EVIDENCE
+For each test, include in the engagement language: target endpoint and method; objective; numbered steps actually performed; baseline versus test variant; evidence source path or execution log identifier.
+Embed the actual sanitized request in a fenced http block (request line, Host, relevant headers and body), and the corresponding response in a separate fenced http block (status, relevant headers, body excerpt and request ID). For command-line tests include the actual command in a bash block and observed output. Explain expected behavior, observed behavior and the evidence-based verdict. A file path alone is insufficient.
+Only label requests as executed when supported by execution logs or retrieved evidence. Label illustrative payloads as examples. Missing response, WAF logs, callback or business-effect evidence means not verified. HTTP 200 alone does not prove exploitation. Never invent requests, responses, timestamps, screenshots or successful exfiltration.
+Redact credentials, session cookies, tokens, secrets and personal data from headers, URLs and bodies. For out-of-band tests include only observed callbacks and sanitized test markers, never real session data.
