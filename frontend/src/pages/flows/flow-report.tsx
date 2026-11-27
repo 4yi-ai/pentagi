@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import Logo from '@/components/icons/logo';
 import Markdown from '@/components/shared/markdown';
 import { useFlowReportQuery } from '@/graphql/types';
 import { Log } from '@/lib/log';
-import { generateFileName, generatePDFFromMarkdown, generateReport } from '@/lib/report';
+import { generateFileName, generatePDFFromMarkdown, generateReportWithEvidence } from '@/lib/report';
 
 type PdfPhase = 'done' | 'error' | 'idle';
 type ReportState = 'content' | 'error' | 'generating' | 'loading';
@@ -40,17 +40,30 @@ function FlowReport() {
 
     const dataReady = !loading && !queryError && !!data?.flow;
 
-    const reportContent = useMemo(
-        () => (dataReady ? generateReport(data.tasks || [], data.flow!) : ''),
-        [dataReady, data],
-    );
+    const [reportContent, setReportContent] = useState('');
+    const [evidenceReady, setEvidenceReady] = useState(false);
+    useEffect(() => {
+        let cancelled = false;
+        setEvidenceReady(false);
+        if (dataReady && data?.flow) {
+            generateReportWithEvidence(data.tasks || [], data.flow).then((content) => {
+                if (!cancelled) {
+                    setReportContent(content);
+                    setEvidenceReady(true);
+                }
+            });
+        }
+        return () => {
+            cancelled = true;
+        };
+    }, [dataReady, data]);
 
     useEffect(() => {
         pdfTriggered.current = false;
     }, [flowId]);
 
     useEffect(() => {
-        if (!dataReady || !download || pdfTriggered.current || !data?.flow) {
+        if (!dataReady || !evidenceReady || !download || pdfTriggered.current || !data?.flow) {
             return;
         }
 
@@ -71,12 +84,12 @@ function FlowReport() {
                 setPdfError('Failed to generate PDF');
                 setPdfPhase('error');
             });
-    }, [dataReady, download, silent, reportContent, data]);
+    }, [dataReady, evidenceReady, download, silent, reportContent, data]);
 
     let state: ReportState;
     let errorMessage: null | string = null;
 
-    if (loading) {
+    if (loading || (dataReady && !evidenceReady)) {
         state = 'loading';
     } else if (queryError || !data?.flow) {
         state = 'error';

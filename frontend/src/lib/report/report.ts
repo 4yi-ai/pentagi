@@ -1,3 +1,4 @@
+import axios from '@/lib/axios';
 import GithubSlugger from 'github-slugger';
 
 import type { FlowFragmentFragment, TaskFragmentFragment } from '@/graphql/types';
@@ -210,4 +211,44 @@ export const generatePDFBlob = async (content: string): Promise<Blob> => {
     const { generatePDFBlobNew } = await import('./report-pdf');
 
     return generatePDFBlobNew(content);
+};
+
+/** Expand only explicitly referenced evidence files; never invent missing evidence. */
+export const generateReportWithEvidence = async (
+    tasks: TaskFragmentFragment[],
+    flow: FlowFragmentFragment,
+): Promise<string> => {
+    let report = generateReport(tasks, flow);
+    const paths = [...new Set(report.match(/\/work\/evidence\/[a-zA-Z0-9_./-]+\.(?:md|json|txt|csv|log)\b/g) || [])];
+    if (!paths.length) return report;
+    report += '\n\n# 测试过程与证据附件\n\n以下为实际读取的证据文件；文件中的结论仍需结合请求、响应及业务结果核验。\n';
+    for (const path of paths) {
+        if (path.split('/').includes('..')) continue;
+        const query = new URLSearchParams({ path: `container/${path.slice(1)}` });
+        let content: unknown;
+        try {
+            try {
+                content = await axios.get<unknown, unknown>(`/flows/${flow.id}/files/download?${query}`, {
+                    responseType: 'text',
+                    transformResponse: [(value: unknown) => value],
+                });
+            } catch {
+                await axios.post(`/flows/${flow.id}/files/pull`, { paths: [path] });
+                content = await axios.get<unknown, unknown>(`/flows/${flow.id}/files/download?${query}`, {
+                    responseType: 'text',
+                    transformResponse: [(value: unknown) => value],
+                });
+            }
+            if (typeof content !== 'string') throw new Error('Unexpected evidence format');
+            // Strip common credentials from exported evidence.
+            content = content
+                .replace(/((?:authorization|cookie|set-cookie|x-api-key)\s*:\s*)[^\r\n]+/gi, '$1[REDACTED]')
+                .replace(/("(?:password|access_token|refresh_token|api_key|secret)"\s*:\s*")[^"]*/gi, '$1[REDACTED]');
+            const fence = '`'.repeat(Math.max(3, ...(content.match(/`+/g) || []).map((value) => value.length + 1)));
+            report += `\n## ${path}\n\n${fence}text\n${content}\n${fence}\n`;
+        } catch {
+            report += `\n## ${path}\n\n证据文件未能读取：可能不存在、容器已停止或当前账号无权限。本项不构成已验证证据。\n`;
+        }
+    }
+    return report;
 };

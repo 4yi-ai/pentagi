@@ -51,7 +51,7 @@ import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { useFlowTabDetection } from '@/hooks/use-flow-tab-detection';
 import { useT } from '@/lib/i18n';
 import { Log } from '@/lib/log';
-import { copyToClipboard, downloadTextFile, generateFileName, generateReport } from '@/lib/report';
+import { copyToClipboard, downloadTextFile, generateFileName, generateReportWithEvidence } from '@/lib/report';
 import { cn } from '@/lib/utils';
 import { formatName } from '@/lib/utils/format';
 import { useFavorites } from '@/providers/favorites-provider';
@@ -450,7 +450,7 @@ function FlowReportDropdown() {
             return;
         }
 
-        const reportContent = generateReport(tasks, flow);
+        const reportContent = await generateReportWithEvidence(tasks, flow);
         const success = await copyToClipboard(reportContent);
 
         if (success) {
@@ -461,13 +461,13 @@ function FlowReportDropdown() {
         }
     };
 
-    const handleDownloadMD = () => {
+    const handleDownloadMD = async () => {
         if (isReportDisabled || !flow) {
             return;
         }
 
         try {
-            const reportContent = generateReport(tasks, flow);
+            const reportContent = await generateReportWithEvidence(tasks, flow);
 
             const baseFileName = generateFileName(flow);
             const fileName = `${baseFileName}.md`;
