@@ -218,8 +218,16 @@ export const generateReportWithEvidence = async (
     tasks: TaskFragmentFragment[],
     flow: FlowFragmentFragment,
 ): Promise<string> => {
-    let report = generateReport(tasks, flow);
-    const paths = [...new Set(report.match(/\/work\/evidence\/[a-zA-Z0-9_./-]+\.(?:md|json|txt|csv|log)\b/g) || [])];
+    const redact = (text: string): string =>
+        text
+            .replace(/((?:authorization|cookie|set-cookie|x-api-key)\s*:\s*)[^\r\n]+/gi, '$1[REDACTED]')
+            .replace(
+                /((?:密码|password|access_token|refresh_token|api_key|secret)\s*[：:=]\s*)[^\s,，;；]+/gi,
+                '$1[REDACTED]',
+            )
+            .replace(/([\w.+-]+@[\w.-]+\.[a-z]{2,}\s*\n)[^\s\n]+/gi, '$1[REDACTED]');
+    let report = redact(generateReport(tasks, flow));
+    const paths = [...new Set(report.match(/\/work\/[a-zA-Z0-9_./-]+\.(?:md|json|txt|csv|log|har)\b/g) || [])];
     if (!paths.length) return report;
     report += '\n\n# 测试过程与证据附件\n\n以下为实际读取的证据文件；文件中的结论仍需结合请求、响应及业务结果核验。\n';
     for (const path of paths) {
@@ -241,7 +249,7 @@ export const generateReportWithEvidence = async (
             }
             if (typeof content !== 'string') throw new Error('Unexpected evidence format');
             // Strip common credentials from exported evidence.
-            content = content
+            content = redact(content)
                 .replace(/((?:authorization|cookie|set-cookie|x-api-key)\s*:\s*)[^\r\n]+/gi, '$1[REDACTED]')
                 .replace(/("(?:password|access_token|refresh_token|api_key|secret)"\s*:\s*")[^"]*/gi, '$1[REDACTED]');
             const fence = '`'.repeat(Math.max(3, ...(content.match(/`+/g) || []).map((value) => value.length + 1)));

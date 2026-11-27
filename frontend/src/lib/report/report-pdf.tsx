@@ -359,6 +359,23 @@ const parseMarkdownTokens = (markdown: string): ParsedContent[] => {
                 break;
             }
 
+            case 'table': {
+                // Preserve every cell as readable rows instead of silently dropping tables.
+                if (typeof token.raw === 'string') {
+                    const rows = token.raw
+                        .trim()
+                        .split('\n')
+                        .filter((row) => !/^\s*\|?[\s:|-]+\|?\s*$/.test(row));
+                    rows.forEach((row) =>
+                        result.push({
+                            inlineTokens: parseInlineTokens(row),
+                            type: 'paragraph',
+                        }),
+                    );
+                }
+                break;
+            }
+
             case 'paragraph': {
                 result.push({
                     inlineTokens: parseInlineTokens(String(token.text || '')),
